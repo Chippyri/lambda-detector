@@ -1,0 +1,9 @@
+The query that was used to query the RepoReaper dataset with LogParser:
+
+logparser -i:CSV -o:CSV "SELECT repository,language,architecture,community,continuous_integration,documentation,history,issues,license,size,unit_test,stars,scorebased_org,randomforest_org,scorebased_utl,randomforest_utl INTO cpprepos_org.csv FROM dataset.csv WHERE language = 'C++' AND randomforest_org = 1"
+
+The file was split with these instructions in to files of 100 entries:
+https://stackoverflow.com/questions/20721120/how-to-split-csv-files-as-per-number-of-rows-specified
+
+To download the repositories this command was used, where filename is substituted for the name one of the split files:
+for f in `cat <filename>.csv`; do `git clone https://github.com/$f`; done
