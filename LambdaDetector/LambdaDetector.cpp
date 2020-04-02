@@ -61,6 +61,46 @@ void writeRepositoryMapToFile(const concurrent_unordered_map<string, bool>& repo
 	outputFile.close();
 }
 
+// Checking every row in the file of the path if it contains []( or [=](, operator[] is not considered a lambda. 
+bool detectLambda(string path) {
+
+	std::fstream myfile(path);
+	ofstream infoFile;
+	infoFile.open("info.txt", std::ios_base::app);
+	int lineCounter = 1;
+	bool lambda = false;
+
+	string line;
+	if (myfile) {
+		while (getline(myfile, line)) {
+			//cout << line << endl;
+			// Would like to find another solution to this.
+			if (line.find("operator[](") != std::string::npos || line.find("operator [](") != std::string::npos || line.find("operator[] (") != std::string::npos || line.find("operator [] (") != std::string::npos) {
+
+			} else if (line.find("[](") != std::string::npos) {
+				//cout << "YES THERES [] HERE" << endl;
+				infoFile << "This file had a lambda []: " << path << " line: " << lineCounter << endl;
+				lambda = true;
+			}
+			else if (line.find("[=](") != std::string::npos) {
+				//cout << "YES THERES [=] HERE" << endl;
+				infoFile << "This file had a lambda [=]: " << path << " line: " << lineCounter << endl;
+				lambda = true;
+			}
+			else {
+				//cout << "NOT ON THIS LINE" << endl;
+			}
+			lineCounter++;
+		}
+	}
+
+	myfile.close();
+	infoFile.close();
+
+	return lambda;
+	//cout << file << endl;
+}
+
 unique_ptr<int[]> countFileTypes(const string& path)
 {
 	int cppFileCount = 0;
@@ -75,6 +115,8 @@ unique_ptr<int[]> countFileTypes(const string& path)
 	int hxxFileCount = 0;
 	int hplusplusFileCount = 0;
 
+	auto ptr = std::unique_ptr<int[]>(new int[11]);
+
 	for (const auto& entry : fs::recursive_directory_iterator(path))
 	{
 		if (entry.is_regular_file() && entry.path().has_extension())
@@ -84,50 +126,91 @@ unique_ptr<int[]> countFileTypes(const string& path)
 				c = ::tolower(c);
 				});
 
+			// Would like to find a solution to not repeat the same code in every if-statement
 			if (str == EXTENSION_CPP)
 			{
 				cppFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_C)
 			{
 				cFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_CC)
 			{
 				ccFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_CPLUSPLUS)
 			{
 				cplusplusFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_CXX)
 			{
 				cxxFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_H)
 			{
 				hFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_HPP)
 			{
 				hppFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_HH)
 			{
 				hhFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_HPLUSPLUS)
 			{
 				hplusplusFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 			else if (str == EXTENSION_HXX)
 			{
 				hxxFileCount++;
+				string path = entry.path().string();
+				if (detectLambda(path)) {
+					ptr.get()[10] = 1;
+				}
 			}
 		}
 	}
 
-	auto ptr = std::unique_ptr<int[]>(new int[10]);
+	
 
 	ptr.get()[0] = cppFileCount;
 	ptr.get()[1] = ccFileCount;
@@ -140,6 +223,11 @@ unique_ptr<int[]> countFileTypes(const string& path)
 	ptr.get()[7] = hppFileCount;
 	ptr.get()[8] = hplusplusFileCount;
 	ptr.get()[9] = hxxFileCount;
+
+	// If the file does not have a lambda, [10] to zero
+	if (ptr.get()[10] != 1) {
+		ptr.get()[10] = 0;
+	}
 
 	return ptr;
 }
@@ -157,6 +245,8 @@ concurrent_queue<string> createWorkQueue(const concurrent_unordered_map<string, 
 }
 
 
+
+
 // A callable object 
 class thread_obj {
 public:
@@ -170,6 +260,13 @@ public:
 			searchPath.append("/");
 			searchPath.append(popped);
 			auto ptr = countFileTypes(searchPath);
+
+			// Open lambda and nolambda files.
+			ofstream lambdaFile;
+			lambdaFile.open("lambda.txt", std::ios_base::app);
+
+			ofstream noLambdaFile;
+			noLambdaFile.open("nolambda.txt", std::ios_base::app);
 
 			//sleep_for(std::chrono::seconds(1));
 
@@ -186,6 +283,18 @@ public:
 			cout << "HPP: " << ptr.get()[7] << endl;
 			cout << "H++: " << ptr.get()[8] << endl;
 			cout << "HXX: " << ptr.get()[9] << endl;
+			
+			// Add popped (name) to file if it has lambda or not.
+			if (ptr.get()[10] == 1) {
+				lambdaFile << popped << endl;
+			}
+			else {
+				noLambdaFile << popped << endl;
+			}
+
+			// Close files
+			lambdaFile.close();
+			noLambdaFile.close();
 		}
 	}
 };
@@ -197,6 +306,7 @@ int main(const int argc, const char* argv[])
 		return 1;
 	}
 
+	cout << argc << endl;
 	PATH = argv[1];
 
 	const auto repositories = createMap(PATH);
