@@ -3,6 +3,7 @@
 
 #include "LambdaDetector.h"
 
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -67,29 +68,78 @@ bool detectLambda(string path) {
 	std::fstream myfile(path);
 	ofstream infoFile;
 	infoFile.open("info.txt", std::ios_base::app);
+	ofstream testFile;
+	testFile.open("test.txt", std::ios_base::app);
 	int lineCounter = 1;
 	bool lambda = false;
 
+	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
+	//string re = R"((constexpr))";
+	string bad = R"((operator|delete)\s*\[)";
+	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
+	string good = R"(\[[a-z\&\s\=]*\]\s*\()"; // [ ] [ =] [= ] [        = ]
+	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
+	
+	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
+	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*\{)";
+	//std::regex badRegex("operator|delete) [");
+	auto const badRegex = std::regex(bad, std::regex::optimize);
+	auto const goodRegex = std::regex(good, std::regex::optimize);
+	//std::regex goodRegex(re);
+	//std::smatch match;
+
+	//// Possible before lambda
+	//string bLambda1 = ",";
+	//string bLambda2 = "=";
+	//string bLambda3 = " ";
+
+	//// Possible lambdas
+	//string pLambda1  = "[](";
+	//string pLambda2  = "[] (";
+	//string pLambda3  = "[=](";
+	//string pLambda4  = "[ =](";
+	//string pLambda5  = "[= ](";
+	//string pLambda6  = "[ = ](";
+	//string pLambda7  = "[ =] (";
+	//string pLambda8  = "[= ] (";
+	//string pLambda9	 = "[ = ] (";
+
+	//string pLambda10 = "[&";
+
+
+	//string pLambda11 = "[](";
+	//string pLambda12 = "[](";
+
 	string line;
+
 	if (myfile) {
 		while (getline(myfile, line)) {
 			//cout << line << endl;
+			
 			// Would like to find another solution to this.
-			if (line.find("operator[](") != std::string::npos || line.find("operator [](") != std::string::npos || line.find("operator[] (") != std::string::npos || line.find("operator [] (") != std::string::npos) {
+			if (std::regex_search(line, badRegex)) {
+				
+			}
+			else if (std::regex_search(line, goodRegex)) {
+				testFile << path << " line: " << lineCounter << endl;
+				lambda = true;
+			}
 
-			} else if (line.find("[](") != std::string::npos) {
-				//cout << "YES THERES [] HERE" << endl;
-				infoFile << "This file had a lambda []: " << path << " line: " << lineCounter << endl;
-				lambda = true;
-			}
-			else if (line.find("[=](") != std::string::npos) {
-				//cout << "YES THERES [=] HERE" << endl;
-				infoFile << "This file had a lambda [=]: " << path << " line: " << lineCounter << endl;
-				lambda = true;
-			}
-			else {
-				//cout << "NOT ON THIS LINE" << endl;
-			}
+			//if (line.find("delete[]") != std::string::npos || line.find("delete []") != std::string::npos || line.find("operator[](") != std::string::npos || line.find("operator [](") != std::string::npos || line.find("operator[] (") != std::string::npos || line.find("operator [] (") != std::string::npos) {
+
+			//} else if (line.find("[](") != std::string::npos || line.find("[] (") != std::string::npos) {
+			//	//cout << "YES THERES [] HERE" << endl;
+			//	infoFile << path << " line: " << lineCounter << endl;
+			//	lambda = true;
+			//}
+			//else if (line.find("[=](") != std::string::npos || line.find("[ =](") != std::string::npos|| line.find("[= ](") != std::string::npos || line.find("[ = ](") != std::string::npos || line.find("[ = ] (") != std::string::npos) {
+			//	//cout << "YES THERES [=] HERE" << endl;
+			//	infoFile << path << " line: " << lineCounter << endl;
+			//	lambda = true;
+			//}
+			//else {
+			//	//cout << "NOT ON THIS LINE" << endl;
+			//}
 			lineCounter++;
 		}
 	}

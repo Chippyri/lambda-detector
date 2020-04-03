@@ -16,3 +16,4 @@
 #include <memory>
 #include <locale>
 #include <algorithm>
+#include <regex>
