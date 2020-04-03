@@ -14,6 +14,7 @@ using std::ref;
 using std::lock_guard;
 using std::mutex;
 using std::unique_ptr;
+using boost::regex;
 
 using namespace Concurrency;
 using namespace std::this_thread;
@@ -359,6 +360,9 @@ int main(const int argc, const char* argv[])
 	cout << argc << endl;
 	PATH = argv[1];
 
+	// TODO: Test, feel free to remove!
+	boost:regex reg("hello");
+	
 	const auto repositories = createMap(PATH);
 	concurrent_queue<string> workQueue = createWorkQueue(repositories);
 
