@@ -2,7 +2,7 @@
 //
 
 #include "LambdaDetector.h"
-
+#include <boost/regex.hpp>
 
 using std::cout;
 using std::endl;
