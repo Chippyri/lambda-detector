@@ -1,0 +1,6 @@
+1. Place inside repository with git.
+2. Run.
+
+Note:
+It will leave files like authors.txt, days.txt without deletion.
+These should be replaced with temporary files.
