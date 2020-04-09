@@ -1,0 +1,5 @@
+1. Place devexp.sh one level above the directory which contains all repositories. 
+2. Run. A file called experience.txt will be created. It will contain commaseparated information about each repository.
+
+Improvements needed:
+Add repository owner to commaseparated .txt-file.
