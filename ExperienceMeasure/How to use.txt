@@ -3,3 +3,6 @@
 
 Improvements needed:
 Add repository owner to commaseparated .txt-file.
+The path for the file should be relative.
+There is unnecessary code present and so much printing is not necessary.
+Some values can be moved outside functions.
