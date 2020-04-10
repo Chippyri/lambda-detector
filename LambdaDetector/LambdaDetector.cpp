@@ -33,7 +33,7 @@ const string EXTENSION_HXX = ".hxx";
 const string EXTENSION_HPLUSPLUS = ".h++";
 
 // TODO: Global variables, move to a class 
-static mutex global_mtx;
+//static mutex global_mtx;
 static string PATH;
 
 concurrent_unordered_map<string, bool> createMap(const string& path)
@@ -75,57 +75,76 @@ bool detectLambda(string path) {
 	bool lambda = false;
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
+	string comment = R"(\s*\/\*)";
 	//string re = R"((constexpr))";
 	string bad = R"((operator|delete)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	string good = R"(\[[a-z\&\s\=]*\]\s*\()"; // [ ] [ =] [= ] [        = ]
+	string good = R"([\,\=\s\(\)]+[\,\=\s\(\)]+\[[a-z\&\s\=]*\]\s*\()"; // [ ] [ =] [= ] [        = ]
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 	
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*\{)";
 	//std::regex badRegex("operator|delete) [");
+	auto const commentRegex = std::regex(comment, std::regex::optimize);
 	auto const badRegex = std::regex(bad, std::regex::optimize);
 	auto const goodRegex = std::regex(good, std::regex::optimize);
 	//std::regex goodRegex(re);
 	//std::smatch match;
 
-	//// Possible before lambda
-	//string bLambda1 = ",";
-	//string bLambda2 = "=";
-	//string bLambda3 = " ";
-
-	//// Possible lambdas
-	//string pLambda1  = "[](";
-	//string pLambda2  = "[] (";
-	//string pLambda3  = "[=](";
-	//string pLambda4  = "[ =](";
-	//string pLambda5  = "[= ](";
-	//string pLambda6  = "[ = ](";
-	//string pLambda7  = "[ =] (";
-	//string pLambda8  = "[= ] (";
-	//string pLambda9	 = "[ = ] (";
-
-	//string pLambda10 = "[&";
-
-
-	//string pLambda11 = "[](";
-	//string pLambda12 = "[](";
-
 	string line;
-
+	string subline;
+	string newline;
+	int pos = 0;
+	bool stopComment = false;
 	if (myfile) {
 		while (getline(myfile, line)) {
 			//cout << line << endl;
 			
-			// Would like to find another solution to this.
-			if (std::regex_search(line, badRegex)) {
-				
-			}
-			else if (std::regex_search(line, goodRegex)) {
-				testFile << path << " line: " << lineCounter << endl;
-				lambda = true;
-			}
+			// Find /* if it is first on the line, skip until */
+			// If it's not the first, save what is before /* in line and check line as normal while then skipping whats in /**/
 
+			//TODO repeated code, change
+			// If the line has a comment
+			if (pos = std::regex_search(line, commentRegex)) {
+				// Line up to comment is still checked if it has a lambda
+				subline = line.substr(0, pos);
+				if (std::regex_search(subline, badRegex)) {
+				}
+				
+				else if (std::regex_search(subline, goodRegex)) {
+					testFile << path << " line: " << lineCounter << endl;
+					lambda = true;
+				}
+				//cout << lineCounter << " " << subline + line << endl;
+				// If the same line that started the comment end the comment
+				if (line.find("*/") != std::string::npos) {
+					stopComment = true;
+				}
+
+				// If the line didnt end the comment, get more lines unton there is a remove comment
+				while (getline(myfile, newline) && stopComment == false) {
+					
+					if (newline.find("*/") != std::string::npos) {
+						stopComment = true;
+					}
+					// still counting the lines
+					lineCounter++;
+
+				}
+
+			}
+			// If the line did not have a comment, search for lambda
+			else {
+
+				if (std::regex_search(line, badRegex)) {
+
+				}
+
+				else if (std::regex_search(line, goodRegex)) {
+					testFile << path << " line: " << lineCounter << endl;
+					lambda = true;
+				}
+			}
 			//if (line.find("delete[]") != std::string::npos || line.find("delete []") != std::string::npos || line.find("operator[](") != std::string::npos || line.find("operator [](") != std::string::npos || line.find("operator[] (") != std::string::npos || line.find("operator [] (") != std::string::npos) {
 
 			//} else if (line.find("[](") != std::string::npos || line.find("[] (") != std::string::npos) {
@@ -321,7 +340,7 @@ public:
 
 			//sleep_for(std::chrono::seconds(1));
 
-			std::lock_guard<std::mutex> lock{ global_mtx };
+			//std::lock_guard<std::mutex> lock{ global_mtx };
 			cout << get_id() << ": " << popped << endl;
 
 			cout << "CPP: " << ptr.get()[0] << endl;
