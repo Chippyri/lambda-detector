@@ -75,7 +75,10 @@ bool detectLambda(string path) {
 	bool lambda = false;
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
+	// /* comment
 	string comment = R"(\s*\/\*)";
+	// // comment
+	string sComment = R"(\s*\/\/)";
 	//string re = R"((constexpr))";
 	string bad = R"((operator|delete)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
@@ -85,6 +88,7 @@ bool detectLambda(string path) {
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*\{)";
 	//std::regex badRegex("operator|delete) [");
+	auto const sCommentRegex = std::regex(sComment, std::regex::optimize);
 	auto const commentRegex = std::regex(comment, std::regex::optimize);
 	auto const badRegex = std::regex(bad, std::regex::optimize);
 	auto const goodRegex = std::regex(good, std::regex::optimize);
@@ -105,7 +109,10 @@ bool detectLambda(string path) {
 
 			//TODO repeated code, change
 			// If the line has a comment
-			if (pos = std::regex_search(line, commentRegex)) {
+			if (std::regex_search(line, sCommentRegex)) {
+
+			}
+			else if (pos = std::regex_search(line, commentRegex)) {
 				// Line up to comment is still checked if it has a lambda
 				subline = line.substr(0, pos);
 				if (std::regex_search(subline, badRegex)) {
@@ -115,21 +122,20 @@ bool detectLambda(string path) {
 					testFile << path << " line: " << lineCounter << endl;
 					lambda = true;
 				}
-				//cout << lineCounter << " " << subline + line << endl;
+				// cout << lineCounter << " " << subline + line << endl;
 				// If the same line that started the comment end the comment
 				if (line.find("*/") != std::string::npos) {
 					stopComment = true;
 				}
 
-				// If the line didnt end the comment, get more lines unton there is a remove comment
-				while (getline(myfile, newline) && stopComment == false) {
-					
+				// If the line didnt end the comment, get more lines until there is a remove comment
+				while (stopComment == false && getline(myfile, newline)) {
+
 					if (newline.find("*/") != std::string::npos) {
 						stopComment = true;
 					}
 					// still counting the lines
 					lineCounter++;
-
 				}
 
 			}
@@ -145,21 +151,6 @@ bool detectLambda(string path) {
 					lambda = true;
 				}
 			}
-			//if (line.find("delete[]") != std::string::npos || line.find("delete []") != std::string::npos || line.find("operator[](") != std::string::npos || line.find("operator [](") != std::string::npos || line.find("operator[] (") != std::string::npos || line.find("operator [] (") != std::string::npos) {
-
-			//} else if (line.find("[](") != std::string::npos || line.find("[] (") != std::string::npos) {
-			//	//cout << "YES THERES [] HERE" << endl;
-			//	infoFile << path << " line: " << lineCounter << endl;
-			//	lambda = true;
-			//}
-			//else if (line.find("[=](") != std::string::npos || line.find("[ =](") != std::string::npos|| line.find("[= ](") != std::string::npos || line.find("[ = ](") != std::string::npos || line.find("[ = ] (") != std::string::npos) {
-			//	//cout << "YES THERES [=] HERE" << endl;
-			//	infoFile << path << " line: " << lineCounter << endl;
-			//	lambda = true;
-			//}
-			//else {
-			//	//cout << "NOT ON THIS LINE" << endl;
-			//}
 			lineCounter++;
 		}
 	}
