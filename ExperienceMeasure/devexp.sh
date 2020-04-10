@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+UNIX_DAY=86400
+RETVAL=-1
+FILE_NAME="experience.txt"
+
 #source: https://unix.stackexchange.com/a/218522
 inside_git_repo()
 {
@@ -7,16 +11,24 @@ inside_git_repo()
 
 	if [ "$inside_git_repo" ]; then
 	  echo "inside git repo"
+	  RETVAL=1
 	else
 	  echo "not in git repo"
+	  RETVAL=0
 	fi
 }
 
 calculate_experience()
 {
+	inside_git_repo
+	if [ $RETVAL == 0 ] 
+	then 
+		return
+	fi
+
 	# The length of a day in a Unix timestamp
-	UNIX_DAY=86400
 	REPO_NAME=$(basename -s .git `git config --get remote.origin.url`)
+	echo -------- $REPO_NAME ---------
 
 	# Create temporary files to contain data to iterate over
 	# File is removed when quitting or crashing
@@ -66,17 +78,13 @@ calculate_experience()
 	echo "Lines:" $LINES
 	echo "Mean:" $MEAN
 
-	echo "${REPO_NAME},${LINES},${TOTAL},${MEAN}" >> ${FILE_NAME}
+	echo "${REPO_NAME},${LINES},${TOTAL},${MEAN}" >> ../${FILE_NAME}
 }
 
-
-# Create file
-FILE_NAME="E:/repositories/experience.txt"
 echo repository,authors_considered,total_experience,mean_experience > ${FILE_NAME}
 
-for f in ./*/*; do
+for f in ./*/; do
     if [ -d ${f} ]; then  
-    	(cd "$f" && echo $f && inside_git_repo && calculate_experience);
+    	(cd "$f" && calculate_experience);
     fi
 done
-
