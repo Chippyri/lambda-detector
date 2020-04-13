@@ -99,6 +99,7 @@ bool detectLambda(string path) {
 	string subline;
 	string newline;
 	int pos = 0;
+	int spos = 0;
 	bool stopComment = false;
 	if (myfile) {
 		while (getline(myfile, line)) {
@@ -109,9 +110,8 @@ bool detectLambda(string path) {
 
 			//TODO repeated code, change
 			// If the line has a comment
-			if (pos == std::regex_search(line, sCommentRegex)) {
-				// Check up to "//" if the comment is on the same line as other code. not checking the commented code.
-				subline = line.substr(0, pos);
+			if (spos = std::regex_search(line, sCommentRegex)) {
+				subline = line.substr(0, spos);
 				if (std::regex_search(subline, badRegex)) {
 				}
 
@@ -125,7 +125,7 @@ bool detectLambda(string path) {
 				subline = line.substr(0, pos);
 				if (std::regex_search(subline, badRegex)) {
 				}
-				
+
 				else if (std::regex_search(subline, goodRegex)) {
 					testFile << path << " line: " << lineCounter << endl;
 					lambda = true;
@@ -159,6 +159,7 @@ bool detectLambda(string path) {
 					lambda = true;
 				}
 			}
+			
 			lineCounter++;
 		}
 	}
