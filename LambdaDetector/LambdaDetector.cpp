@@ -20,6 +20,10 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
+string TEST = "test3.txt";
+string LAMBDA = "lambda3.txt";
+string NOLAMBDA = "nolambda3.txt";
+
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
 const string EXTENSION_C = ".c";
@@ -70,9 +74,12 @@ bool detectLambda(string path) {
 	ofstream infoFile;
 	infoFile.open("info.txt", std::ios_base::app);
 	ofstream testFile;
-	testFile.open("test.txt", std::ios_base::app);
+	testFile.open(TEST, std::ios_base::app);
 	int lineCounter = 1;
 	bool lambda = false;
+
+	// TEST PRINT WHAT FILE IT IS CURRENTLY CHECKING
+	//cout << path << endl;
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
 	// /* comment
@@ -323,6 +330,7 @@ public:
 	void operator()(concurrent_queue<string>& queue) const
 	{
 		string popped;
+		int counter = 1;
 		while (queue.try_pop(popped))
 		{
 			string searchPath;
@@ -333,33 +341,35 @@ public:
 
 			// Open lambda and nolambda files.
 			ofstream lambdaFile;
-			lambdaFile.open("lambda.txt", std::ios_base::app);
+			lambdaFile.open(LAMBDA, std::ios_base::app);
 
 			ofstream noLambdaFile;
-			noLambdaFile.open("nolambda.txt", std::ios_base::app);
+			noLambdaFile.open(NOLAMBDA, std::ios_base::app);
 
 			//sleep_for(std::chrono::seconds(1));
 
 			//std::lock_guard<std::mutex> lock{ global_mtx };
-			cout << get_id() << ": " << popped << endl;
+			//cout << counter << ": " << popped << endl;
 
-			cout << "CPP: " << ptr.get()[0] << endl;
-			cout << "CC: " << ptr.get()[1] << endl;
-			cout << "C: " << ptr.get()[2] << endl;
-			cout << "C++: " << ptr.get()[3] << endl;
-			cout << "CXX: " << ptr.get()[4] << endl;
-			cout << "H: " << ptr.get()[5] << endl;
-			cout << "HH: " << ptr.get()[6] << endl;
-			cout << "HPP: " << ptr.get()[7] << endl;
-			cout << "H++: " << ptr.get()[8] << endl;
-			cout << "HXX: " << ptr.get()[9] << endl;
+			//cout << "CPP: " << ptr.get()[0] << endl;
+			//cout << "CC: " << ptr.get()[1] << endl;
+			//cout << "C: " << ptr.get()[2] << endl;
+			//cout << "C++: " << ptr.get()[3] << endl;
+			//cout << "CXX: " << ptr.get()[4] << endl;
+			//cout << "H: " << ptr.get()[5] << endl;
+			//cout << "HH: " << ptr.get()[6] << endl;
+			//cout << "HPP: " << ptr.get()[7] << endl;
+			//cout << "H++: " << ptr.get()[8] << endl;
+			//cout << "HXX: " << ptr.get()[9] << endl;
 			
 			// Add popped (name) to file if it has lambda or not.
 			if (ptr.get()[10] == 1) {
 				lambdaFile << popped << endl;
+				counter++;
 			}
 			else {
 				noLambdaFile << popped << endl;
+				counter++;
 			}
 
 			// Close files
@@ -376,7 +386,7 @@ int main(const int argc, const char* argv[])
 		return 1;
 	}
 
-	cout << argc << endl;
+	//cout << argc << endl;
 	PATH = argv[1];
 
 	// TODO: Test, feel free to remove!
