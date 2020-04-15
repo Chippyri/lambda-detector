@@ -68,12 +68,12 @@ void writeRepositoryMapToFile(const concurrent_unordered_map<string, bool>& repo
 }
 
 // Checking every row in the file of the path if it contains []( or [=](, operator[] is not considered a lambda. 
-bool detectLambda(string path) {
+bool detectLambda(std::wstring path) {
 
 	std::fstream myfile(path);
 	ofstream infoFile;
 	infoFile.open("info.txt", std::ios_base::app);
-	ofstream testFile;
+	std::wofstream testFile;
 	testFile.open(TEST, std::ios_base::app);
 	int lineCounter = 1;
 	bool lambda = false;
@@ -178,6 +178,25 @@ bool detectLambda(string path) {
 	//cout << file << endl;
 }
 
+bool hasExtensionAndUpdateCount(const string& extensionToTest, const string& extensionWanted, int& fileCountVariable)
+{
+	if (extensionToTest == extensionWanted)
+	{
+		fileCountVariable++;
+		return true;
+	}
+	return false;
+}
+
+void detectAndUpdateIfRepoHasLambda(unique_ptr<int[]>& pointer, const std::filesystem::directory_entry& pathToFile)
+{
+	std::wstring nPath;
+	nPath.append(pathToFile.path().wstring());
+	if (detectLambda(nPath)) {
+		pointer.get()[10] = 1;
+	}
+}
+
 unique_ptr<int[]> countFileTypes(const string& path)
 {
 	int cppFileCount = 0;
@@ -201,93 +220,22 @@ unique_ptr<int[]> countFileTypes(const string& path)
 			string str = entry.path().extension().string();
 			std::for_each(str.begin(), str.end(), [](char& c) {
 				c = ::tolower(c);
-				});
+			});
 
-			// Would like to find a solution to not repeat the same code in every if-statement
-			if (str == EXTENSION_CPP)
+			if (hasExtensionAndUpdateCount(str, EXTENSION_CPP, cppFileCount) || 
+				hasExtensionAndUpdateCount(str, EXTENSION_H, hFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_C, cFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HPP, hppFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_CPLUSPLUS, cplusplusFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_CXX, cxxFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HH, hhFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HXX, hxxFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HPLUSPLUS, hplusplusFileCount))
 			{
-				cppFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_C)
-			{
-				cFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CC)
-			{
-				ccFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CPLUSPLUS)
-			{
-				cplusplusFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CXX)
-			{
-				cxxFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_H)
-			{
-				hFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HPP)
-			{
-				hppFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HH)
-			{
-				hhFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HPLUSPLUS)
-			{
-				hplusplusFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HXX)
-			{
-				hxxFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
+				detectAndUpdateIfRepoHasLambda(ptr, entry);
 			}
 		}
 	}
-
-	
 
 	ptr.get()[0] = cppFileCount;
 	ptr.get()[1] = ccFileCount;
@@ -321,9 +269,6 @@ concurrent_queue<string> createWorkQueue(const concurrent_unordered_map<string, 
 	return queue;
 }
 
-
-
-
 // A callable object 
 class thread_obj {
 public:
@@ -349,7 +294,7 @@ public:
 			//sleep_for(std::chrono::seconds(1));
 
 			//std::lock_guard<std::mutex> lock{ global_mtx };
-			//cout << counter << ": " << popped << endl;
+			cout << get_id() << ": " << popped << endl;
 
 			//cout << "CPP: " << ptr.get()[0] << endl;
 			//cout << "CC: " << ptr.get()[1] << endl;
