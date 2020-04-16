@@ -4,6 +4,8 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <boost/algorithm/string/replace.hpp>
+
 using std::ifstream;
 using std::ofstream;
 using std::string;
@@ -11,7 +13,6 @@ using std::cout;
 using std::endl;
 using std::getline;
 using std::stoi;
-int counter = 1;
 
 int main(const int argc, const char* argv[])
 {
@@ -19,54 +20,66 @@ int main(const int argc, const char* argv[])
 	const auto DELIMITER_LENGTH = DELIMITER.length();
 	const string HTML_START_TAGS = "<!DOCTYPE html><html><head></head><body>";
 	const string HTML_END_TAGS = "</body></html>";
-	const auto NUMBER_OF_LINES = 8;
-	const int NUMBEROFLAMBDASINFILE = 1000;
 
+	const auto NUMBER_OF_LINES = 8;
+	const auto NUMBER_OF_LAMBDAS_IN_FILE = 1000;
+	const auto MAXIMUM_NUMBER_OF_OUTPUT_FILES = 100;
+	const string ANALYSIS_FILE_NAME = "test3.txt";	//TODO: set back to test.txt
+	const string OUTPUT_FILE_PREFIX = "linecopy_output";
+	
 	// Open the file with the LambdaDetector-results.
-	ifstream analysisFile("test.txt");
+	ifstream analysisFile(ANALYSIS_FILE_NAME);
 	string currentLine;
 	
-	// Create a HTML output file and initialize it.
+	// Create the first HTML output file and initialize it.
+	int lineCounter = 1;
 	int fileCounter = 0;
-	string fileName = "linecopy_output" + std::to_string(fileCounter) +".html";
-
-	ofstream outputFile(fileName, ofstream::out | ofstream::trunc);
-	outputFile << HTML_START_TAGS;
-
-	// Parse the LambdaDetector-results and output the preceding and 
-	// following lines for the match.
-	
-	ofstream outfile[20];
+	string fileName = OUTPUT_FILE_PREFIX + std::to_string(fileCounter) + ".html";
+	ofstream outfile[MAXIMUM_NUMBER_OF_OUTPUT_FILES];
 	outfile[fileCounter].open(fileName, ofstream::out | ofstream::trunc);
 	outfile[fileCounter] << HTML_START_TAGS;
+
+	// Parse the LambdaDetector-results and output the preceding and following lines for the match.
 	while (getline(analysisFile, currentLine)) {
 
-		if (counter % NUMBEROFLAMBDASINFILE == 0) {
-			outfile[fileCounter] << HTML_START_TAGS;
+		// If maximum number of lines in a file has been reached, end the file and open the next one.
+		if (lineCounter % NUMBER_OF_LAMBDAS_IN_FILE == 0) {
+
+			// Close the current file.
+			outfile[fileCounter] << HTML_END_TAGS;
 			outfile[fileCounter].close();
 			fileCounter++;
-			fileName = "linecopy_output" + std::to_string(fileCounter) + ".html";
+
+			// Just so that we don't go past the end of the array
+			if (fileCounter >= MAXIMUM_NUMBER_OF_OUTPUT_FILES)
+			{
+				break;
+			}
+			
+			// Create and open a new file in the array.
+			fileName = OUTPUT_FILE_PREFIX + std::to_string(fileCounter) + ".html";
 			outfile[fileCounter].open(fileName, ofstream::out | ofstream::trunc);
 			outfile[fileCounter] << HTML_START_TAGS;
 		}
+		
 		// Get the strings before and after the delimiter, not including the delimiter.
 		const auto delimiterPosition = currentLine.find(DELIMITER);
 		const auto pastDelimiterPosition = delimiterPosition + DELIMITER_LENGTH;
 		const string filePath = currentLine.substr(0, delimiterPosition);
 		const string rowNumberAsString = currentLine.substr(pastDelimiterPosition);
 
-		// Get the found line number as a number.
+		// Get the parsed line number as a number.
 		const auto rowNumberAsInt = stoi(rowNumberAsString);
 
-		// Print the current line to cout so that we know there is something happening
+		// Print the current line to cout so that we know there is something happening.
 		cout << currentLine << endl;
 		
-		// Print the exact line (path + row) from the LambdaDetector log to HTML output
-		outfile[fileCounter] << "<pre><b>" << counter << " " << currentLine << "</b></pre>" << endl;
+		// Print the exact line (path + row) from the LambdaDetector log to HTML output.
+		outfile[fileCounter] << "<pre><b>" << lineCounter << " " << currentLine << "</b></pre>" << endl;
 
-		// Open the file located in the filepath
+		// Open the file located in the filepath.
 		ifstream matchedFile(filePath);
-		auto lineCounter = 0;
+		auto inFileLineCounter = 0;
 		string tmpStr;
 
 		// Calculate on which row to start if we want preceding lines
@@ -78,18 +91,28 @@ int main(const int argc, const char* argv[])
 		}
 
 		while (getline(matchedFile, tmpStr)) {
-			lineCounter++;
-			if (lineCounter == startLine)
+			inFileLineCounter++;
+
+			// Once the starting line is found, start copying the lines of code into the HTML-file.
+			if (inFileLineCounter == startLine)
 			{
 				outfile[fileCounter] << "<pre>";
 				for (auto i = 0; i < NUMBER_OF_LINES; i++)
 				{
-					lineCounter++;
+					inFileLineCounter++;
 					if (getline(matchedFile, tmpStr))	// The number of rows may be past the end of the file
 					{
-						outfile[fileCounter] << "<b>" << lineCounter << "</b>" << ": ";
-						if (lineCounter == rowNumberAsInt)
-						{
+						// Write out the line number copied
+						outfile[fileCounter] << "<b>" << inFileLineCounter << "</b>" << ": ";
+
+						// Replace all characters which could be construed as HTML
+						boost::replace_all(tmpStr, "&", "&amp;");
+						boost::replace_all(tmpStr, "<", "&lt;");
+						boost::replace_all(tmpStr, ">", "&gt;");
+
+						// If the matched line is the current one, highlight the start of the lambda
+						if (inFileLineCounter == rowNumberAsInt)
+						{	
 							// Split string in to two, the second half will be made red and bold to easier notice it (after the [-character)
 							auto charPos = tmpStr.find('[');
 							outfile[fileCounter] << tmpStr.substr(0, charPos);
@@ -107,7 +130,7 @@ int main(const int argc, const char* argv[])
 				break;
 			}
 		}
-		counter++;
+		lineCounter++;
 	}
 
 	// "end" the HTML file
