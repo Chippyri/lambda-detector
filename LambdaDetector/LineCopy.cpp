@@ -24,11 +24,16 @@ int main(const int argc, const char* argv[])
 	const auto NUMBER_OF_LINES = 8;
 	const auto NUMBER_OF_LAMBDAS_IN_FILE = 1000;
 	const auto MAXIMUM_NUMBER_OF_OUTPUT_FILES = 100;
-	const string ANALYSIS_FILE_NAME = "test3.txt";	//TODO: set back to test.txt
+	const string ANALYSIS_FILE_NAME = "test.txt";
 	const string OUTPUT_FILE_PREFIX = "linecopy_output";
 	
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile(ANALYSIS_FILE_NAME);
+	if (!analysisFile.good())
+	{
+		return 1;
+	}
+	
 	string currentLine;
 	
 	// Create the first HTML output file and initialize it.
@@ -109,7 +114,7 @@ int main(const int argc, const char* argv[])
 						boost::replace_all(tmpStr, "&", "&amp;");
 						boost::replace_all(tmpStr, "<", "&lt;");
 						boost::replace_all(tmpStr, ">", "&gt;");
-
+						
 						// If the matched line is the current one, highlight the start of the lambda
 						if (inFileLineCounter == rowNumberAsInt)
 						{	
@@ -122,7 +127,17 @@ int main(const int argc, const char* argv[])
 						}
 						else
 						{
-							outfile[fileCounter] << tmpStr << '\n';
+							// Does the line contain the characters //? If so, mark everything starting from them
+							// on that line in green.
+							if (tmpStr.find("//") != string::npos)
+							{
+								const int foundPos = tmpStr.find("//");
+								outfile[fileCounter] << tmpStr.substr(0, foundPos);
+								outfile[fileCounter] << "<font color='green'>" << tmpStr.substr(foundPos) << "</font>\n";
+							} else
+							{
+								outfile[fileCounter] << tmpStr << '\n';
+							}
 						}
 					}
 				}
