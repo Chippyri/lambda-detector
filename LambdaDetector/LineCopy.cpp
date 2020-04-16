@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <vector>
 using std::ifstream;
 using std::ofstream;
 using std::string;
@@ -10,6 +11,7 @@ using std::cout;
 using std::endl;
 using std::getline;
 using std::stoi;
+int counter = 1;
 
 int main(const int argc, const char* argv[])
 {
@@ -18,19 +20,35 @@ int main(const int argc, const char* argv[])
 	const string HTML_START_TAGS = "<!DOCTYPE html><html><head></head><body>";
 	const string HTML_END_TAGS = "</body></html>";
 	const auto NUMBER_OF_LINES = 8;
+	const int NUMBEROFLAMBDASINFILE = 1000;
 
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile("test.txt");
 	string currentLine;
-
+	
 	// Create a HTML output file and initialize it.
-	ofstream outputFile("linecopy_output.html", ofstream::out | ofstream::trunc);
+	int fileCounter = 0;
+	string fileName = "linecopy_output" + std::to_string(fileCounter) +".html";
+
+	ofstream outputFile(fileName, ofstream::out | ofstream::trunc);
 	outputFile << HTML_START_TAGS;
 
 	// Parse the LambdaDetector-results and output the preceding and 
 	// following lines for the match.
+	
+	ofstream outfile[20];
+	outfile[fileCounter].open(fileName, ofstream::out | ofstream::trunc);
+	outfile[fileCounter] << HTML_START_TAGS;
 	while (getline(analysisFile, currentLine)) {
 
+		if (counter % NUMBEROFLAMBDASINFILE == 0) {
+			outfile[fileCounter] << HTML_START_TAGS;
+			outfile[fileCounter].close();
+			fileCounter++;
+			fileName = "linecopy_output" + std::to_string(fileCounter) + ".html";
+			outfile[fileCounter].open(fileName, ofstream::out | ofstream::trunc);
+			outfile[fileCounter] << HTML_START_TAGS;
+		}
 		// Get the strings before and after the delimiter, not including the delimiter.
 		const auto delimiterPosition = currentLine.find(DELIMITER);
 		const auto pastDelimiterPosition = delimiterPosition + DELIMITER_LENGTH;
@@ -44,7 +62,7 @@ int main(const int argc, const char* argv[])
 		cout << currentLine << endl;
 		
 		// Print the exact line (path + row) from the LambdaDetector log to HTML output
-		outputFile << "<pre><b>" << currentLine << "</b></pre>" << endl;
+		outfile[fileCounter] << "<pre><b>" << counter << " " << currentLine << "</b></pre>" << endl;
 
 		// Open the file located in the filepath
 		ifstream matchedFile(filePath);
@@ -63,39 +81,40 @@ int main(const int argc, const char* argv[])
 			lineCounter++;
 			if (lineCounter == startLine)
 			{
-				outputFile << "<pre>";
+				outfile[fileCounter] << "<pre>";
 				for (auto i = 0; i < NUMBER_OF_LINES; i++)
 				{
 					lineCounter++;
 					if (getline(matchedFile, tmpStr))	// The number of rows may be past the end of the file
 					{
-						outputFile << "<b>" << lineCounter << "</b>" << ": ";
+						outfile[fileCounter] << "<b>" << lineCounter << "</b>" << ": ";
 						if (lineCounter == rowNumberAsInt)
 						{
 							// Split string in to two, the second half will be made red and bold to easier notice it (after the [-character)
 							auto charPos = tmpStr.find('[');
-							outputFile << tmpStr.substr(0, charPos);
-							outputFile << "<b><font color='red'>";
-							outputFile << tmpStr.substr(charPos);
-							outputFile << "</font></b>\n";
+							outfile[fileCounter] << tmpStr.substr(0, charPos);
+							outfile[fileCounter] << "<b><font color='red'>";
+							outfile[fileCounter] << tmpStr.substr(charPos);
+							outfile[fileCounter] << "</font></b>\n";
 						}
 						else
 						{
-							outputFile << tmpStr << '\n';
+							outfile[fileCounter] << tmpStr << '\n';
 						}
 					}
 				}
-				outputFile << "</pre>";
+				outfile[fileCounter] << "</pre>";
 				break;
 			}
 		}
+		counter++;
 	}
 
 	// "end" the HTML file
-	outputFile << HTML_END_TAGS;
+	outfile[fileCounter] << HTML_END_TAGS;
 
 	// Close the files
-	outputFile.close();
+	outfile[fileCounter].close();
 	analysisFile.close();
 	
 	return 0;

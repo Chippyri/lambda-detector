@@ -20,9 +20,9 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-string TEST = "test3.txt";
-string LAMBDA = "lambda3.txt";
-string NOLAMBDA = "nolambda3.txt";
+const string TEST = "test.txt";
+const string LAMBDA = "lambda.txt";
+const string NOLAMBDA = "nolambda.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -37,7 +37,6 @@ const string EXTENSION_HXX = ".hxx";
 const string EXTENSION_HPLUSPLUS = ".h++";
 
 // TODO: Global variables, move to a class 
-//static mutex global_mtx;
 static string PATH;
 
 concurrent_unordered_map<string, bool> createMap(const string& path)
@@ -79,7 +78,7 @@ bool detectLambda(std::wstring path) {
 	bool lambda = false;
 
 	// TEST PRINT WHAT FILE IT IS CURRENTLY CHECKING
-	//cout << path << endl;
+	//std::wcout << path << endl;
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
 	// /* comment
@@ -269,13 +268,24 @@ concurrent_queue<string> createWorkQueue(const concurrent_unordered_map<string, 
 	return queue;
 }
 
+struct AtomicCounter {
+	std::atomic<int> value = 0;
+
+	int get() {
+		++value;
+		return value.load();
+	}
+};
+AtomicCounter counter;
 // A callable object 
 class thread_obj {
+private:
+	
 public:
+	
 	void operator()(concurrent_queue<string>& queue) const
 	{
 		string popped;
-		int counter = 1;
 		while (queue.try_pop(popped))
 		{
 			string searchPath;
@@ -283,7 +293,7 @@ public:
 			searchPath.append("/");
 			searchPath.append(popped);
 			auto ptr = countFileTypes(searchPath);
-
+			
 			// Open lambda and nolambda files.
 			ofstream lambdaFile;
 			lambdaFile.open(LAMBDA, std::ios_base::app);
@@ -294,7 +304,7 @@ public:
 			//sleep_for(std::chrono::seconds(1));
 
 			//std::lock_guard<std::mutex> lock{ global_mtx };
-			cout << get_id() << ": " << popped << endl;
+			cout << counter.get() << ": " << popped << endl;
 
 			//cout << "CPP: " << ptr.get()[0] << endl;
 			//cout << "CC: " << ptr.get()[1] << endl;
@@ -310,11 +320,9 @@ public:
 			// Add popped (name) to file if it has lambda or not.
 			if (ptr.get()[10] == 1) {
 				lambdaFile << popped << endl;
-				counter++;
 			}
 			else {
 				noLambdaFile << popped << endl;
-				counter++;
 			}
 
 			// Close files
