@@ -20,6 +20,10 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
+const string TEST = "test.txt";
+const string LAMBDA = "lambda.txt";
+const string NOLAMBDA = "nolambda.txt";
+
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
 const string EXTENSION_C = ".c";
@@ -33,7 +37,6 @@ const string EXTENSION_HXX = ".hxx";
 const string EXTENSION_HPLUSPLUS = ".h++";
 
 // TODO: Global variables, move to a class 
-//static mutex global_mtx;
 static string PATH;
 
 concurrent_unordered_map<string, bool> createMap(const string& path)
@@ -64,15 +67,18 @@ void writeRepositoryMapToFile(const concurrent_unordered_map<string, bool>& repo
 }
 
 // Checking every row in the file of the path if it contains []( or [=](, operator[] is not considered a lambda. 
-bool detectLambda(string path) {
+bool detectLambda(std::wstring path) {
 
 	std::fstream myfile(path);
 	ofstream infoFile;
 	infoFile.open("info.txt", std::ios_base::app);
-	ofstream testFile;
-	testFile.open("test.txt", std::ios_base::app);
+	std::wofstream testFile;
+	testFile.open(TEST, std::ios_base::app);
 	int lineCounter = 1;
 	bool lambda = false;
+
+	// TEST PRINT WHAT FILE IT IS CURRENTLY CHECKING
+	//std::wcout << path << endl;
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
 	// /* comment
@@ -99,6 +105,7 @@ bool detectLambda(string path) {
 	string subline;
 	string newline;
 	int pos = 0;
+	int spos = 0;
 	bool stopComment = false;
 	if (myfile) {
 		while (getline(myfile, line)) {
@@ -109,15 +116,22 @@ bool detectLambda(string path) {
 
 			//TODO repeated code, change
 			// If the line has a comment
-			if (std::regex_search(line, sCommentRegex)) {
+			if (spos = std::regex_search(line, sCommentRegex)) {
+				subline = line.substr(0, spos);
+				if (std::regex_search(subline, badRegex)) {
+				}
 
+				else if (std::regex_search(subline, goodRegex)) {
+					testFile << path << " line: " << lineCounter << endl;
+					lambda = true;
+				}
 			}
 			else if (pos = std::regex_search(line, commentRegex)) {
 				// Line up to comment is still checked if it has a lambda
 				subline = line.substr(0, pos);
 				if (std::regex_search(subline, badRegex)) {
 				}
-				
+
 				else if (std::regex_search(subline, goodRegex)) {
 					testFile << path << " line: " << lineCounter << endl;
 					lambda = true;
@@ -151,6 +165,7 @@ bool detectLambda(string path) {
 					lambda = true;
 				}
 			}
+			
 			lineCounter++;
 		}
 	}
@@ -160,6 +175,25 @@ bool detectLambda(string path) {
 
 	return lambda;
 	//cout << file << endl;
+}
+
+bool hasExtensionAndUpdateCount(const string& extensionToTest, const string& extensionWanted, int& fileCountVariable)
+{
+	if (extensionToTest == extensionWanted)
+	{
+		fileCountVariable++;
+		return true;
+	}
+	return false;
+}
+
+void detectAndUpdateIfRepoHasLambda(unique_ptr<int[]>& pointer, const std::filesystem::directory_entry& pathToFile)
+{
+	std::wstring nPath;
+	nPath.append(pathToFile.path().wstring());
+	if (detectLambda(nPath)) {
+		pointer.get()[10] = 1;
+	}
 }
 
 unique_ptr<int[]> countFileTypes(const string& path)
@@ -185,93 +219,22 @@ unique_ptr<int[]> countFileTypes(const string& path)
 			string str = entry.path().extension().string();
 			std::for_each(str.begin(), str.end(), [](char& c) {
 				c = ::tolower(c);
-				});
+			});
 
-			// Would like to find a solution to not repeat the same code in every if-statement
-			if (str == EXTENSION_CPP)
+			if (hasExtensionAndUpdateCount(str, EXTENSION_CPP, cppFileCount) || 
+				hasExtensionAndUpdateCount(str, EXTENSION_H, hFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_C, cFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HPP, hppFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_CPLUSPLUS, cplusplusFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_CXX, cxxFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HH, hhFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HXX, hxxFileCount) ||
+				hasExtensionAndUpdateCount(str, EXTENSION_HPLUSPLUS, hplusplusFileCount))
 			{
-				cppFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_C)
-			{
-				cFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CC)
-			{
-				ccFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CPLUSPLUS)
-			{
-				cplusplusFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_CXX)
-			{
-				cxxFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_H)
-			{
-				hFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HPP)
-			{
-				hppFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HH)
-			{
-				hhFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HPLUSPLUS)
-			{
-				hplusplusFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
-			}
-			else if (str == EXTENSION_HXX)
-			{
-				hxxFileCount++;
-				string path = entry.path().string();
-				if (detectLambda(path)) {
-					ptr.get()[10] = 1;
-				}
+				detectAndUpdateIfRepoHasLambda(ptr, entry);
 			}
 		}
 	}
-
-	
 
 	ptr.get()[0] = cppFileCount;
 	ptr.get()[1] = ccFileCount;
@@ -305,12 +268,21 @@ concurrent_queue<string> createWorkQueue(const concurrent_unordered_map<string, 
 	return queue;
 }
 
+struct AtomicCounter {
+	std::atomic<int> value = 0;
 
-
-
+	int get() {
+		++value;
+		return value.load();
+	}
+};
+AtomicCounter counter;
 // A callable object 
 class thread_obj {
+private:
+	
 public:
+	
 	void operator()(concurrent_queue<string>& queue) const
 	{
 		string popped;
@@ -321,29 +293,29 @@ public:
 			searchPath.append("/");
 			searchPath.append(popped);
 			auto ptr = countFileTypes(searchPath);
-
+			
 			// Open lambda and nolambda files.
 			ofstream lambdaFile;
-			lambdaFile.open("lambda.txt", std::ios_base::app);
+			lambdaFile.open(LAMBDA, std::ios_base::app);
 
 			ofstream noLambdaFile;
-			noLambdaFile.open("nolambda.txt", std::ios_base::app);
+			noLambdaFile.open(NOLAMBDA, std::ios_base::app);
 
 			//sleep_for(std::chrono::seconds(1));
 
 			//std::lock_guard<std::mutex> lock{ global_mtx };
-			cout << get_id() << ": " << popped << endl;
+			cout << counter.get() << ": " << popped << endl;
 
-			cout << "CPP: " << ptr.get()[0] << endl;
-			cout << "CC: " << ptr.get()[1] << endl;
-			cout << "C: " << ptr.get()[2] << endl;
-			cout << "C++: " << ptr.get()[3] << endl;
-			cout << "CXX: " << ptr.get()[4] << endl;
-			cout << "H: " << ptr.get()[5] << endl;
-			cout << "HH: " << ptr.get()[6] << endl;
-			cout << "HPP: " << ptr.get()[7] << endl;
-			cout << "H++: " << ptr.get()[8] << endl;
-			cout << "HXX: " << ptr.get()[9] << endl;
+			//cout << "CPP: " << ptr.get()[0] << endl;
+			//cout << "CC: " << ptr.get()[1] << endl;
+			//cout << "C: " << ptr.get()[2] << endl;
+			//cout << "C++: " << ptr.get()[3] << endl;
+			//cout << "CXX: " << ptr.get()[4] << endl;
+			//cout << "H: " << ptr.get()[5] << endl;
+			//cout << "HH: " << ptr.get()[6] << endl;
+			//cout << "HPP: " << ptr.get()[7] << endl;
+			//cout << "H++: " << ptr.get()[8] << endl;
+			//cout << "HXX: " << ptr.get()[9] << endl;
 			
 			// Add popped (name) to file if it has lambda or not.
 			if (ptr.get()[10] == 1) {
@@ -367,7 +339,7 @@ int main(const int argc, const char* argv[])
 		return 1;
 	}
 
-	cout << argc << endl;
+	//cout << argc << endl;
 	PATH = argv[1];
 
 	// TODO: Test, feel free to remove!
