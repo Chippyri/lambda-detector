@@ -11,7 +11,6 @@ using std::cout;
 using std::endl;
 using std::getline;
 using std::stoi;
-int counter = 1;
 
 int main(const int argc, const char* argv[])
 {
@@ -21,6 +20,7 @@ int main(const int argc, const char* argv[])
 	const string HTML_END_TAGS = "</body></html>";
 	const auto NUMBER_OF_LINES = 8;
 	const int NUMBEROFLAMBDASINFILE = 1000;
+	int counter = 1;
 
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile("test.txt");
