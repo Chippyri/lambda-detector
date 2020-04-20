@@ -11,3 +11,6 @@ CTestTestfile.cmake
 _deps
 .vs/
 out/
+ExperienceMeasure/packages
+ExperienceMeasure/ExperienceMeasureCSharp/bin
+ExperienceMeasure/ExperienceMeasureCSharp/obj
