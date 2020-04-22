@@ -178,6 +178,7 @@ int main(const int argc, const char* argv[])
 			viewsContainingComment++;
 			viewContainsComment = false;
 			commentFile << outputToCommentFile;
+			commentFileLineCounter++;
 		}
 		outputToCommentFile = "";
 	}
