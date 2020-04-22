@@ -3,7 +3,6 @@
 #include <fstream>
 #include <string>
 #include <iostream>
-#include <vector>
 #include <boost/algorithm/string/replace.hpp>
 
 using std::ifstream;
@@ -26,6 +25,7 @@ int main(const int argc, const char* argv[])
 	const auto MAXIMUM_NUMBER_OF_OUTPUT_FILES = 100;
 	const string ANALYSIS_FILE_NAME = "test.txt";
 	const string OUTPUT_FILE_PREFIX = "linecopy_output";
+	const string COMMENT_FILE_NAME = "linecopy_comments.html";
 	
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile(ANALYSIS_FILE_NAME);
@@ -34,9 +34,8 @@ int main(const int argc, const char* argv[])
 		return 1;
 	}
 	
-	string currentLine;
-	
 	// Create the first HTML output file and initialize it.
+	string currentLine;
 	int lineCounter = 1;
 	int fileCounter = 0;
 	string fileName = OUTPUT_FILE_PREFIX + std::to_string(fileCounter) + ".html";
@@ -44,6 +43,17 @@ int main(const int argc, const char* argv[])
 	outfile[fileCounter].open(fileName, ofstream::out | ofstream::trunc);
 	outfile[fileCounter] << HTML_START_TAGS;
 
+	// Open the comment file and initialize it
+	ofstream commentFile(COMMENT_FILE_NAME, ofstream::out | ofstream::trunc);
+	commentFile << HTML_START_TAGS;
+	string outputToCommentFile;
+
+	// Counter and checker if a view contained a comment
+	long totalViews = 0;
+	long viewsContainingComment = 0;
+	long commentFileLineCounter = 1;
+	bool viewContainsComment = false;
+	
 	// Parse the LambdaDetector-results and output the preceding and following lines for the match.
 	while (getline(analysisFile, currentLine)) {
 
@@ -81,7 +91,8 @@ int main(const int argc, const char* argv[])
 		
 		// Print the exact line (path + row) from the LambdaDetector log to HTML output.
 		outfile[fileCounter] << "<pre><b>" << lineCounter << " " << currentLine << "</b></pre>" << endl;
-
+		outputToCommentFile.append("<pre><b>" + std::to_string(commentFileLineCounter) + " " + currentLine + "</b></pre>\n");
+		
 		// Open the file located in the filepath.
 		ifstream matchedFile(filePath);
 		auto inFileLineCounter = 0;
@@ -95,21 +106,26 @@ int main(const int argc, const char* argv[])
 			startLine = 0;
 		}
 
+		// Read the matched file row by row
 		while (getline(matchedFile, tmpStr)) {
 			inFileLineCounter++;
 
+			viewContainsComment = false;
+			
 			// Once the starting line is found, start copying the lines of code into the HTML-file.
 			if (inFileLineCounter == startLine)
 			{
 				outfile[fileCounter] << "<pre>";
+				outputToCommentFile.append("<pre>");
 				for (auto i = 0; i < NUMBER_OF_LINES; i++)
 				{
 					inFileLineCounter++;
 					if (getline(matchedFile, tmpStr))	// The number of rows may be past the end of the file
 					{
 						// Write out the line number copied
-						outfile[fileCounter] << "<b>" << inFileLineCounter << "</b>" << ": ";
-
+						outfile[fileCounter] << "<b>" << inFileLineCounter << "</b>: ";
+						outputToCommentFile.append("<b>" + std::to_string(inFileLineCounter) + "</b>: ");
+						
 						// Replace all characters which could be construed as HTML
 						boost::replace_all(tmpStr, "&", "&amp;");
 						boost::replace_all(tmpStr, "<", "&lt;");
@@ -124,6 +140,10 @@ int main(const int argc, const char* argv[])
 							outfile[fileCounter] << "<b><font color='red'>";
 							outfile[fileCounter] << tmpStr.substr(charPos);
 							outfile[fileCounter] << "</font></b>\n";
+							outputToCommentFile.append(tmpStr.substr(0, charPos));
+							outputToCommentFile.append("<b><font color='red'>");
+							outputToCommentFile.append(tmpStr.substr(charPos));
+							outputToCommentFile.append("</font></b>\n");
 						}
 						else
 						{
@@ -131,29 +151,47 @@ int main(const int argc, const char* argv[])
 							// on that line in green.
 							if (tmpStr.find("//") != string::npos)
 							{
+								viewContainsComment = true;
 								const int foundPos = tmpStr.find("//");
 								outfile[fileCounter] << tmpStr.substr(0, foundPos);
 								outfile[fileCounter] << "<font color='green'>" << tmpStr.substr(foundPos) << "</font>\n";
+
+								outputToCommentFile.append(tmpStr.substr(0, foundPos));
+								outputToCommentFile.append("<font color='green'>" + tmpStr.substr(foundPos) + "</font>\n");
 							} else
 							{
 								outfile[fileCounter] << tmpStr << '\n';
+								outputToCommentFile.append(tmpStr + '\n');
 							}
 						}
 					}
 				}
 				outfile[fileCounter] << "</pre>";
+				outputToCommentFile.append("</pre>");
 				break;
 			}
 		}
+		totalViews++;	// Same thing as linecounter?
 		lineCounter++;
+		if (viewContainsComment)
+		{
+			viewsContainingComment++;
+			viewContainsComment = false;
+			commentFile << outputToCommentFile;
+		}
+		outputToCommentFile = "";
 	}
 
-	// "end" the HTML file
+	// "end" the HTML files
 	outfile[fileCounter] << HTML_END_TAGS;
+
+	commentFile << "<b>Commented views/total:</b> " << viewsContainingComment << "/" << totalViews;
+	commentFile << HTML_END_TAGS;
 
 	// Close the files
 	outfile[fileCounter].close();
 	analysisFile.close();
+	commentFile.close();
 	
 	return 0;
 }

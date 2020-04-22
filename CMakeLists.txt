@@ -8,6 +8,4 @@ project ("LambdaDetector")
 # Include sub-projects.
 add_subdirectory ("LambdaDetector")
 
-
-
 target_compile_features("LambdaDetector" PRIVATE cxx_std_17)
