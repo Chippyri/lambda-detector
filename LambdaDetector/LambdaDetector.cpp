@@ -2,7 +2,7 @@
 //
 
 #include "LambdaDetector.h"
-#include <boost/regex.hpp>
+//#include <boost/regex.hpp>
 
 using std::cout;
 using std::endl;
@@ -14,15 +14,15 @@ using std::ref;
 using std::lock_guard;
 using std::mutex;
 using std::unique_ptr;
-using boost::regex;
+//using boost::regex;
 
 using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "test.txt";
-const string LAMBDA = "lambda.txt";
-const string NOLAMBDA = "nolambda.txt";
+const string TEST = "top15test.txt";
+const string LAMBDA = "top15lambda.txt";
+const string NOLAMBDA = "top15nolambda.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -88,7 +88,7 @@ bool detectLambda(std::wstring path) {
 	//string re = R"((constexpr))";
 	string bad = R"((operator|delete)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	string good = R"([\,\=\s\(\)]+[\,\=\s\(\)]+\[[a-z\&\s\=]*\]\s*\()"; // [ ] [ =] [= ] [        = ]
+	string good = R"([\,\=\s\(\)]+[\,\=\s\(\)]+\[[a-z\&\s\=\:]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 	
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
@@ -343,7 +343,7 @@ int main(const int argc, const char* argv[])
 	PATH = argv[1];
 
 	// TODO: Test, feel free to remove!
-	boost:regex reg("hello");
+	//boost:regex reg("hello");
 	
 	const auto repositories = createMap(PATH);
 	concurrent_queue<string> workQueue = createWorkQueue(repositories);
