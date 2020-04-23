@@ -147,8 +147,10 @@ int main(const int argc, const char* argv[])
 						}
 						else
 						{
-							// Does the line contain the characters //? If so, mark everything starting from them
-							// on that line in green.
+							// Does the line contain a character for ending a multi-line comment?
+							// Color everything before it in green.
+														// Does the line contain the characters //? If so, mark everything 
+							// starting from them on that line in green.
 							if (tmpStr.find("//") != string::npos)
 							{
 								viewContainsComment = true;
@@ -158,6 +160,27 @@ int main(const int argc, const char* argv[])
 
 								outputToCommentFile.append(tmpStr.substr(0, foundPos));
 								outputToCommentFile.append("<font color='green'>" + tmpStr.substr(foundPos) + "</font>\n");
+							}
+							else if (tmpStr.find("/*") != string::npos)
+							{
+								viewContainsComment = true;
+								const int foundPos = tmpStr.find("/*");
+								outfile[fileCounter] << tmpStr.substr(0, foundPos);
+								outfile[fileCounter] << "<font color='green'>" << tmpStr.substr(foundPos) << "</font>\n";
+
+								outputToCommentFile.append(tmpStr.substr(0, foundPos));
+								outputToCommentFile.append("<font color='green'>" + tmpStr.substr(foundPos) + "</font>\n");
+							}
+
+							else if (tmpStr.find("*/") != string::npos)
+							{
+								viewContainsComment = true;
+								const int foundPos = tmpStr.find("*/") + 2;
+								outfile[fileCounter] << "<font color='green'>" << tmpStr.substr(0, foundPos) << "</font>";
+								outfile[fileCounter] << tmpStr.substr(foundPos) << "\n";
+
+								outputToCommentFile.append("<font color='green'>" + tmpStr.substr(0, foundPos) + "</font>");
+								outputToCommentFile.append(tmpStr.substr(foundPos) + "\n");
 							} else
 							{
 								outfile[fileCounter] << tmpStr << '\n';
