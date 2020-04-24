@@ -20,9 +20,9 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "top15test.txt";
-const string LAMBDA = "top15lambda.txt";
-const string NOLAMBDA = "top15nolambda.txt";
+const string TEST = "TESTHAMMER.txt";
+const string LAMBDA = "lambdaHAMMER.txt";
+const string NOLAMBDA = "nolambdaHAMMER.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -82,20 +82,20 @@ bool detectLambda(std::wstring path) {
 
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
 	// /* comment
-	string comment = R"(\s*\/\*)";
+	//string comment = R"(\s*\/\*)";
 	// // comment
-	string sComment = R"(\s*\/\/)";
+	//string sComment = R"(\s*\/\/)";
 	//string re = R"((constexpr))";
 	string bad = R"((operator|delete)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	string good = R"([\,\=\s\(\)]+[\,\=\s\(\)]+\[[a-z\&\s\=\:]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
+	string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-z\&\s\=\:]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 	
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*\{)";
 	//std::regex badRegex("operator|delete) [");
-	auto const sCommentRegex = std::regex(sComment, std::regex::optimize);
-	auto const commentRegex = std::regex(comment, std::regex::optimize);
+	//auto const sCommentRegex = std::regex(sComment, std::regex::optimize);
+	//auto const commentRegex = std::regex(comment, std::regex::optimize);
 	auto const badRegex = std::regex(bad, std::regex::optimize);
 	auto const goodRegex = std::regex(good, std::regex::optimize);
 	//std::regex goodRegex(re);
@@ -104,8 +104,8 @@ bool detectLambda(std::wstring path) {
 	string line;
 	string subline;
 	string newline;
-	int pos = 0;
-	int spos = 0;
+	std::size_t pos = 0;
+	std::size_t spos = 0;
 	bool stopComment = false;
 	if (myfile) {
 		while (getline(myfile, line)) {
@@ -116,7 +116,7 @@ bool detectLambda(std::wstring path) {
 
 			//TODO repeated code, change
 			// If the line has a comment
-			if (spos = std::regex_search(line, sCommentRegex)) {
+			if ((spos = line.find("//")) != std::string::npos) {
 				subline = line.substr(0, spos);
 				if (std::regex_search(subline, badRegex)) {
 				}
@@ -126,7 +126,7 @@ bool detectLambda(std::wstring path) {
 					lambda = true;
 				}
 			}
-			else if (pos = std::regex_search(line, commentRegex)) {
+			else if ((pos = line.find("/*")) != std::string::npos) {
 				// Line up to comment is still checked if it has a lambda
 				subline = line.substr(0, pos);
 				if (std::regex_search(subline, badRegex)) {
