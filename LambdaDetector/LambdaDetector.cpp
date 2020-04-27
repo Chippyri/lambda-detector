@@ -22,7 +22,7 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "testMutex.txt";
+const string TEST = "testtest.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -98,6 +98,7 @@ bool scanFileForLambda(const wstring& file) {
 
 			//TODO repeated code, change
 			// If the line has a comment
+			stopComment = false;
 			if ((spos = line.find("//")) != string::npos) {
 				subline = line.substr(0, spos);
 				if (regex_search(subline, badRegex)) {
@@ -126,7 +127,6 @@ bool scanFileForLambda(const wstring& file) {
 
 				// If the line didnt end the comment, get more lines until there is a remove comment
 				while (stopComment == false && getline(myFile, newline)) {
-
 					if (newline.find("*/") != string::npos) {
 						stopComment = true;
 					}
