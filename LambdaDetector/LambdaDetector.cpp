@@ -341,9 +341,6 @@ int main(const int argc, const char* argv[])
 
 	//cout << argc << endl;
 	PATH = argv[1];
-
-	// TODO: Test, feel free to remove!
-	//boost:regex reg("hello");
 	
 	const auto repositories = createMap(PATH);
 	concurrent_queue<string> workQueue = createWorkQueue(repositories);
@@ -352,11 +349,17 @@ int main(const int argc, const char* argv[])
 	thread t2(thread_obj(), ref(workQueue));
 	thread t3(thread_obj(), ref(workQueue));
 	thread t4(thread_obj(), ref(workQueue));
+	thread t5(thread_obj(), ref(workQueue));
+	thread t6(thread_obj(), ref(workQueue));
+	thread t7(thread_obj(), ref(workQueue));
 
 	t1.join();
 	t2.join();
 	t3.join();
 	t4.join();
+	t5.join();
+	t6.join();
+	t7.join();
 	
 	return 0;
 }
