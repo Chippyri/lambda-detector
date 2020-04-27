@@ -20,9 +20,9 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "TESTHAMMER.txt";
-const string LAMBDA = "lambdaHAMMER.txt";
-const string NOLAMBDA = "nolambdaHAMMER.txt";
+const string TEST = "test.txt";
+//const string LAMBDA = "l.txt";
+//const string NOLAMBDA = "n.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -86,7 +86,7 @@ bool detectLambda(std::wstring path) {
 	// // comment
 	//string sComment = R"(\s*\/\/)";
 	//string re = R"((constexpr))";
-	string bad = R"((operator|delete)\s*\[)";
+	string bad = R"((operator|delete|new)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
 	string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-z\&\s\=\:]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
@@ -249,9 +249,9 @@ unique_ptr<int[]> countFileTypes(const string& path)
 	ptr.get()[9] = hxxFileCount;
 
 	// If the file does not have a lambda, [10] to zero
-	if (ptr.get()[10] != 1) {
-		ptr.get()[10] = 0;
-	}
+	//if (ptr.get()[10] != 1) {
+	//	ptr.get()[10] = 0;
+	//}
 
 	return ptr;
 }
@@ -295,11 +295,11 @@ public:
 			auto ptr = countFileTypes(searchPath);
 			
 			// Open lambda and nolambda files.
-			ofstream lambdaFile;
-			lambdaFile.open(LAMBDA, std::ios_base::app);
+			//ofstream lambdaFile;
+			//lambdaFile.open(LAMBDA, std::ios_base::app);
 
-			ofstream noLambdaFile;
-			noLambdaFile.open(NOLAMBDA, std::ios_base::app);
+			//ofstream noLambdaFile;
+			//noLambdaFile.open(NOLAMBDA, std::ios_base::app);
 
 			//sleep_for(std::chrono::seconds(1));
 
@@ -318,16 +318,16 @@ public:
 			//cout << "HXX: " << ptr.get()[9] << endl;
 			
 			// Add popped (name) to file if it has lambda or not.
-			if (ptr.get()[10] == 1) {
-				lambdaFile << popped << endl;
-			}
-			else {
-				noLambdaFile << popped << endl;
-			}
+			//if (ptr.get()[10] == 1) {
+			//	lambdaFile << popped << endl;
+			//}
+			//else {
+			//	noLambdaFile << popped << endl;
+			//}
 
 			// Close files
-			lambdaFile.close();
-			noLambdaFile.close();
+			//lambdaFile.close();
+			//noLambdaFile.close();
 		}
 	}
 };
@@ -352,11 +352,21 @@ int main(const int argc, const char* argv[])
 	thread t2(thread_obj(), ref(workQueue));
 	thread t3(thread_obj(), ref(workQueue));
 	thread t4(thread_obj(), ref(workQueue));
+	thread t5(thread_obj(), ref(workQueue));
+	thread t6(thread_obj(), ref(workQueue));
+	thread t7(thread_obj(), ref(workQueue));
+	thread t8(thread_obj(), ref(workQueue));
+	thread t9(thread_obj(), ref(workQueue));
 
 	t1.join();
 	t2.join();
 	t3.join();
 	t4.join();
+	t5.join();
+	t6.join();
+	t7.join();
+	t8.join();
+	t9.join();
 	
 	return 0;
 }
