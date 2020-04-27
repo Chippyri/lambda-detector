@@ -23,10 +23,11 @@ int main(const int argc, const char* argv[])
 	const auto NUMBER_OF_LINES = 8;
 	const auto NUMBER_OF_LAMBDAS_IN_FILE = 100;
 	const auto MAXIMUM_NUMBER_OF_OUTPUT_FILES = 100;
-	const string ANALYSIS_FILE_NAME = "top15test.txt";
-	const string OUTPUT_FILE_PREFIX = "linecopy_output_top15_";
-	const string COMMENT_FILE_NAME = "linecopy_comments_top15_.html";
 
+	const string ANALYSIS_FILE_NAME = "test.txt";
+	const string OUTPUT_FILE_PREFIX = "linecopy_output";
+	const string COMMENT_FILE_NAME = "linecopy_comments.html";
+	
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile(ANALYSIS_FILE_NAME);
 	if (!analysisFile.good())
@@ -181,8 +182,9 @@ int main(const int argc, const char* argv[])
 
 								outputToCommentFile.append("<font color='green'>" + tmpStr.substr(0, foundPos) + "</font>");
 								outputToCommentFile.append(tmpStr.substr(foundPos) + "\n");
-							}
-							else
+
+							} else
+
 							{
 								outfile[fileCounter] << tmpStr << '\n';
 								outputToCommentFile.append(tmpStr + '\n');
@@ -217,6 +219,5 @@ int main(const int argc, const char* argv[])
 	outfile[fileCounter].close();
 	analysisFile.close();
 	commentFile.close();
-
 	return 0;
 }
