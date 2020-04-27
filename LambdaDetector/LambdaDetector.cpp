@@ -20,9 +20,9 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "TESTHAMMER.txt";
-const string LAMBDA = "lambdaHAMMER.txt";
-const string NOLAMBDA = "nolambdaHAMMER.txt";
+const string TEST = "test.txt";
+//const string LAMBDA = "l.txt";
+//const string NOLAMBDA = "n.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -86,11 +86,11 @@ bool detectLambda(std::wstring path) {
 	// // comment
 	//string sComment = R"(\s*\/\/)";
 	//string re = R"((constexpr))";
-	string bad = R"((operator|delete)\s*\[)";
+	string bad = R"((operator|delete|new)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
 	string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-z\&\s\=\:]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
-	
+
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*\{)";
 	//std::regex badRegex("operator|delete) [");
@@ -110,7 +110,7 @@ bool detectLambda(std::wstring path) {
 	if (myfile) {
 		while (getline(myfile, line)) {
 			//cout << line << endl;
-			
+
 			// Find /* if it is first on the line, skip until */
 			// If it's not the first, save what is before /* in line and check line as normal while then skipping whats in /**/
 
@@ -165,7 +165,7 @@ bool detectLambda(std::wstring path) {
 					lambda = true;
 				}
 			}
-			
+
 			lineCounter++;
 		}
 	}
@@ -219,9 +219,9 @@ unique_ptr<int[]> countFileTypes(const string& path)
 			string str = entry.path().extension().string();
 			std::for_each(str.begin(), str.end(), [](char& c) {
 				c = ::tolower(c);
-			});
+				});
 
-			if (hasExtensionAndUpdateCount(str, EXTENSION_CPP, cppFileCount) || 
+			if (hasExtensionAndUpdateCount(str, EXTENSION_CPP, cppFileCount) ||
 				hasExtensionAndUpdateCount(str, EXTENSION_H, hFileCount) ||
 				hasExtensionAndUpdateCount(str, EXTENSION_C, cFileCount) ||
 				hasExtensionAndUpdateCount(str, EXTENSION_HPP, hppFileCount) ||
@@ -249,9 +249,9 @@ unique_ptr<int[]> countFileTypes(const string& path)
 	ptr.get()[9] = hxxFileCount;
 
 	// If the file does not have a lambda, [10] to zero
-	if (ptr.get()[10] != 1) {
-		ptr.get()[10] = 0;
-	}
+	//if (ptr.get()[10] != 1) {
+	//	ptr.get()[10] = 0;
+	//}
 
 	return ptr;
 }
@@ -280,9 +280,9 @@ AtomicCounter counter;
 // A callable object 
 class thread_obj {
 private:
-	
+
 public:
-	
+
 	void operator()(concurrent_queue<string>& queue) const
 	{
 		string popped;
@@ -293,13 +293,13 @@ public:
 			searchPath.append("/");
 			searchPath.append(popped);
 			auto ptr = countFileTypes(searchPath);
-			
-			// Open lambda and nolambda files.
-			ofstream lambdaFile;
-			lambdaFile.open(LAMBDA, std::ios_base::app);
 
-			ofstream noLambdaFile;
-			noLambdaFile.open(NOLAMBDA, std::ios_base::app);
+			// Open lambda and nolambda files.
+			//ofstream lambdaFile;
+			//lambdaFile.open(LAMBDA, std::ios_base::app);
+
+			//ofstream noLambdaFile;
+			//noLambdaFile.open(NOLAMBDA, std::ios_base::app);
 
 			//sleep_for(std::chrono::seconds(1));
 
@@ -316,18 +316,18 @@ public:
 			//cout << "HPP: " << ptr.get()[7] << endl;
 			//cout << "H++: " << ptr.get()[8] << endl;
 			//cout << "HXX: " << ptr.get()[9] << endl;
-			
+
 			// Add popped (name) to file if it has lambda or not.
-			if (ptr.get()[10] == 1) {
-				lambdaFile << popped << endl;
-			}
-			else {
-				noLambdaFile << popped << endl;
-			}
+			//if (ptr.get()[10] == 1) {
+			//	lambdaFile << popped << endl;
+			//}
+			//else {
+			//	noLambdaFile << popped << endl;
+			//}
 
 			// Close files
-			lambdaFile.close();
-			noLambdaFile.close();
+			//lambdaFile.close();
+			//noLambdaFile.close();
 		}
 	}
 };
@@ -341,7 +341,10 @@ int main(const int argc, const char* argv[])
 
 	//cout << argc << endl;
 	PATH = argv[1];
-	
+
+	// TODO: Test, feel free to remove!
+	//boost:regex reg("hello");
+
 	const auto repositories = createMap(PATH);
 	concurrent_queue<string> workQueue = createWorkQueue(repositories);
 
@@ -352,6 +355,8 @@ int main(const int argc, const char* argv[])
 	thread t5(thread_obj(), ref(workQueue));
 	thread t6(thread_obj(), ref(workQueue));
 	thread t7(thread_obj(), ref(workQueue));
+	thread t8(thread_obj(), ref(workQueue));
+	thread t9(thread_obj(), ref(workQueue));
 
 	t1.join();
 	t2.join();
@@ -360,7 +365,9 @@ int main(const int argc, const char* argv[])
 	t5.join();
 	t6.join();
 	t7.join();
-	
+	t8.join();
+	t9.join();
+
 	return 0;
 }
 
