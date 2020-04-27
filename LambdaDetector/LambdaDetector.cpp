@@ -71,7 +71,7 @@ bool scanFileForLambda(const wstring& file) {
 	//string re = R"((constexpr))";
 	const string bad = R"((operator|delete|new)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-z\&\s\=\:\<\>]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
+	const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-zA-Z\&\s\=\:\<\>]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
