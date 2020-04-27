@@ -39,18 +39,16 @@ const string EXTENSION_HPLUSPLUS = ".h++";
 // Global
 static string PATH;
 mutex WRITE_TO_TEST_MUTEX;
+wofstream TEST_FILE_STREAM;
 
-// Should be thread-safe
+// Should be thread-safe?
 void writeToTestFile(const wstring& fileName, const int& lineNumber)
 {
 	// Protects from concurrent writing, is automatically unlocked when function ends
 	const lock_guard<mutex> lock(WRITE_TO_TEST_MUTEX);
 
 	// Open the stream to the output file
-	wofstream testFile;
-	testFile.open(TEST, ios_base::app);
-	testFile << fileName << " line: " << lineNumber << endl;
-	testFile.close();
+	TEST_FILE_STREAM << fileName << " line: " << lineNumber << endl;
 }
 
 // Checking every row in the file of the file if it contains []( or [=](, operator[] is not considered a lambda. 
@@ -259,6 +257,8 @@ int main(const int argc, const char* argv[])
 
 	PATH = argv[1];
 
+	TEST_FILE_STREAM.open(TEST, ios_base::app);
+	
 	// Create a concurrent queue with the repository names
 	concurrent_queue<string> workQueue = createWorkQueue();
 
@@ -281,6 +281,8 @@ int main(const int argc, const char* argv[])
 	t7.join();
 	t8.join();
 	t9.join();
+
+	TEST_FILE_STREAM.close();
 
 	return 0;
 }
