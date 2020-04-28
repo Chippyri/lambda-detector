@@ -22,7 +22,7 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "C:/Users/jonat/Desktop/lambdatest/test4.txt";
+const string TEST = "C:/Users/jonat/Desktop/lambdatest/testNoString5.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -62,7 +62,7 @@ bool scanFileForLambda(const wstring& file) {
 
 	// TEST PRINT WHAT FILE IT IS CURRENTLY CHECKING
 	//std::wcout << file << endl;
-
+	
 	//std::regex regex("\[\][\s]*\(.*\)[\s\w]*\{[\:\(\)[\s\<\;\+a-z\d\/\*]*\}");
 	// /* comment
 	//string comment = R"(\s*\/\*)";
@@ -71,7 +71,7 @@ bool scanFileForLambda(const wstring& file) {
 	//string re = R"((constexpr))";
 	const string bad = R"((operator|delete|new|uint8_t)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-zA-Z0-9\*\,\_\&\s\=\:\<\>]*\]\s*(\(|\{))";
+	const string good = R"([\,\=\s\(\)]*[\,\=\s\t\(\)]+\[[a-zA-Z0-9\*\,\_\&\s\=\:\<\>]*\]\s*(\(|\{))";
 	//const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+((\[\])|(\[\s*[a-zA-Z\_\&\*\s]+[a-zA-Z0-9\*\_\&\s\=\:\<\>\,]*\]))\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 
@@ -96,6 +96,17 @@ bool scanFileForLambda(const wstring& file) {
 
 			// Find /* if it is first on the line, skip until */
 			// If it's not the first, save what is before /* in line and check line as normal while then skipping whats in /**/
+			size_t stringPos = 0;
+			size_t endStringPos = 0;
+			size_t stringPos1 = 0;
+			size_t endStringPos1 = 0;
+			// Remove all strings from the line
+			if ((stringPos = line.find_first_of("\"")) != string::npos)
+			{
+				if ((endStringPos = line.find_last_of("\"")) != string::npos) {
+					line.erase(stringPos + 1, endStringPos - 1);
+				}
+			}
 			//TODO repeated code, change
 			// If the line has a comment
 			stopComment = false;
@@ -137,7 +148,6 @@ bool scanFileForLambda(const wstring& file) {
 			}
 			// If the line did not have a comment, search for lambda
 			else {
-
 				if (regex_search(line, badRegex)) {
 
 				}
