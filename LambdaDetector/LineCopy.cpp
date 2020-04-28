@@ -21,12 +21,12 @@ int main(const int argc, const char* argv[])
 	const string HTML_END_TAGS = "</body></html>";
 
 	const auto NUMBER_OF_LINES = 8;
-	const auto NUMBER_OF_LAMBDAS_IN_FILE = 100;
+	const auto NUMBER_OF_LAMBDAS_IN_FILE = 1000;
 	const auto MAXIMUM_NUMBER_OF_OUTPUT_FILES = 100;
 
-	const string ANALYSIS_FILE_NAME = "test.txt";
-	const string OUTPUT_FILE_PREFIX = "linecopy_output";
-	const string COMMENT_FILE_NAME = "linecopy_comments.html";
+	const string ANALYSIS_FILE_NAME = "C:/Users/jonat/Desktop/lambdatest/test1.txt";
+	const string OUTPUT_FILE_PREFIX = "C:/Users/jonat/Desktop/lambdatest/linecopy_output";
+	const string COMMENT_FILE_NAME = "C:/Users/jonat/Desktop/lambdatest/linecopy_comments.html";
 	
 	// Open the file with the LambdaDetector-results.
 	ifstream analysisFile(ANALYSIS_FILE_NAME);

@@ -69,7 +69,7 @@ bool scanFileForLambda(const wstring& file) {
 	// // comment
 	//string sComment = R"(\s*\/\/)";
 	//string re = R"((constexpr))";
-	const string bad = R"((operator|delete|new|uint8_t)\s*\[)";
+	const string bad = R"((operator|delete|new)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
 	const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-zA-Z0-9\*\,\_\&\s\=\:\<\>]*\]\s*(\(|\{))";
 	//const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+((\[\])|(\[\s*[a-zA-Z\_\&\*\s]+[a-zA-Z0-9\*\_\&\s\=\:\<\>\,]*\]))\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
@@ -96,6 +96,7 @@ bool scanFileForLambda(const wstring& file) {
 
 			// Find /* if it is first on the line, skip until */
 			// If it's not the first, save what is before /* in line and check line as normal while then skipping whats in /**/
+
 			//TODO repeated code, change
 			// If the line has a comment
 			stopComment = false;
