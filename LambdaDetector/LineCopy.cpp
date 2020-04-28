@@ -145,6 +145,10 @@ int main(const int argc, const char* argv[])
 							outputToCommentFile.append("<b><font color='red'>");
 							outputToCommentFile.append(tmpStr.substr(charPos));
 							outputToCommentFile.append("</font></b>\n");
+
+							if (tmpStr.find("//") != string::npos || tmpStr.find("/*") != string::npos){
+								viewContainsComment = true;
+							}
 						}
 						else
 						{
