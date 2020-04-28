@@ -22,7 +22,7 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "C:/Users/jonat/Desktop/lambdatest/testLambda.txt";
+const string TEST = "C:/Users/jonat/Desktop/lambdatest/testNoString.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
