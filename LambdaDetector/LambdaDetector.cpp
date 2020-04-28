@@ -22,7 +22,7 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "C:/Users/jonat/Desktop/lambdatest/testNoString5.txt";
+const string TEST = "C:/Users/jonat/Desktop/lambdatest/testLambda.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -104,7 +104,7 @@ bool scanFileForLambda(const wstring& file) {
 			if ((stringPos = line.find_first_of("\"")) != string::npos)
 			{
 				if ((endStringPos = line.find_last_of("\"")) != string::npos) {
-					line.erase(stringPos + 1, endStringPos - 1);
+					line.erase(stringPos + 1, endStringPos - stringPos - 1);
 				}
 			}
 			//TODO repeated code, change
