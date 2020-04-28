@@ -22,7 +22,7 @@ using namespace Concurrency;
 using namespace std::this_thread;
 namespace fs = std::filesystem;
 
-const string TEST = "testtest.txt";
+const string TEST = "C:/Users/jonat/Desktop/lambdatest/test1.txt";
 
 const string EXTENSION_CPP = ".cpp";
 const string EXTENSION_CC = ".cc";
@@ -71,7 +71,8 @@ bool scanFileForLambda(const wstring& file) {
 	//string re = R"((constexpr))";
 	const string bad = R"((operator|delete|new)\s*\[)";
 	//string regex = R"(\[\s*\]\s*\(\s*\)\s*)";
-	const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-zA-Z\&\s\=\:\<\>]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
+	//const string good = R"([\,\=\s\(\)]*[\,\=\s\(\)]+\[[a-zA-Z0-9\*\_\&\s\=\:\<\>]*\]\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
+	const string good = R"([\,\=\s\(\)]*((\[\])|(\[\s*[a-zA-Z\_\&\*\s]+[a-zA-Z0-9\*\_\&\s\=\:\<\>\,]*\]))\s*\()"; // [ ] [ =] [= ] [        = ] (ADDED "\:")
 	// [\,\=\s\(\)]+ (takes a lot of time but working) Maybe use boost::regex
 
 	// string re = R"(\s*\[[a-z\s\&\=\d]*\]\s*\([a-z\s\&\=\d]*\)\s*(constexpr)?\s*\{)";
