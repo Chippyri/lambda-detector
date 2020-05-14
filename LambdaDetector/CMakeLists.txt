@@ -20,5 +20,6 @@ link_directories(${Boost_LIBRARY_DIRS})
 # Add source to this project's executable.
 add_executable (LambdaDetector "LambdaDetector.cpp" "LambdaDetector.h" )
 add_executable(LineCopy "LineCopy.cpp")
+add_executable(Categorizer "Categorizer.cpp")
 
 # TODO: Add tests and install targets if needed.
