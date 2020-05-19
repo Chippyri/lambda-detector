@@ -59,9 +59,10 @@ int main(const int argc, const char* argv[])
 	ofstream oneLinersCommentsFile("comment_one_liners_with_comments.txt", ofstream::out | ofstream::trunc);
 	ofstream faultFile("comment_faults.txt", ofstream::out | ofstream::trunc);
 
-	ofstream aboveLambdaPathFile("comment_above__paths_lambda.txt", ofstream::out | ofstream::trunc);
+	ofstream aboveLambdaPathFile("comment_above_paths_lambda.txt", ofstream::out | ofstream::trunc);
 	ofstream insideLambdaPathFile("comment_inside_paths_lambda.txt", ofstream::out | ofstream::trunc);
 	ofstream noCommentPathFile("comment_none_paths_lambda.txt", ofstream::out | ofstream::trunc);
+	ofstream commentAfterOneLinerFile("comment_after_one_liner_lambda.txt", ofstream::out | ofstream::trunc);
 	
 	// Counters
 	int commentAboveLambda = 0;
@@ -73,6 +74,7 @@ int main(const int argc, const char* argv[])
 	int lambdasChecked = 0;
 	int oneLiners = 0;
 	int couldNotOpenFile = 0;
+	int oneLinerAfterComment = 0;
 	
 	// Read from input file and copy the corresponding rows to a string to analyse
 	string currentInputLine;
@@ -183,7 +185,17 @@ int main(const int argc, const char* argv[])
 
 					string tmpStorageCut = tmpStorageForOneLiner.substr(startPos, endPos - startPos);
 
-					if (containsAComment(tmpStorageCut))
+					if (endPos <= tmpStorageForOneLiner.length())	// Out of range error?
+					{
+						string tmpStorageCutEndOfLine = tmpStorageForOneLiner.substr(endPos);
+						if (containsAComment(tmpStorageCutEndOfLine))	// After the end of the one-liner
+						{
+							oneLinerAfterComment++;
+							commentAfterOneLinerFile << tmpStorageForOneLiner << endl;
+						}
+					}
+					
+					if (containsAComment(tmpStorageCut))	// Inside the one-liner
 					{
 						lambdaHadACommentInside = true;
 						commentInsideLambda++;
@@ -295,6 +307,7 @@ int main(const int argc, const char* argv[])
 	cout << "Lambdas with no comments at all: " << noCommentsAtAll << endl;
 	cout << "Lambdas that had some comment, not both: " << hadSomeComment << endl;
 	cout << "Lambdas that had both types of comment: " << hadBothComment << endl;
+	cout << "Comment after one-liner on same row: " << oneLinerAfterComment << endl;
 	cout << "Total checked: " << totalChecked << "/" << lambdasChecked << ", missing " << missingLambdas << endl;
 
 	cout << endl << "------------------------------------------------" << endl;
