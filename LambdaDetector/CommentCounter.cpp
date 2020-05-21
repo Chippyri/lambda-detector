@@ -16,6 +16,7 @@ using std::getline;
 using std::stoi;
 using std::vector;
 using std::regex;
+using std::regex_match;
 using std::count;
 
 bool containsAComment(const string & tmpStr)
@@ -46,6 +47,33 @@ bool containsCommentAfterEndingBrace(const string& tmpStr)
 	const auto endPos = tmpStr.find('}');
 	if (endPos == string::npos) return false;
 	return containsAComment(tmpStr.substr(endPos));
+}
+
+// NOTE: Requires the string to contain the }-character
+bool containsCommentAfterStartingBrace(const string& tmpStr)
+{
+	const auto startPos = tmpStr.find('{');
+	if (startPos == string::npos) return false;
+	return containsAComment(tmpStr.substr(startPos));
+}
+
+bool firstCharacterOnLineIsStartingBrace(const string& tmpStr)
+{
+	auto startingBrace = tmpStr.find('{');
+	string beginning = tmpStr.substr(0, startingBrace);
+
+	for (const char& c : beginning)
+	{
+		if (!isspace(c))
+		{
+			if (tmpStr.find("->") != string::npos)
+			{
+				return true;
+			}
+			return false;
+		}
+	}
+	return true;
 }
 
 void evaluateOneLiner(ofstream& oneLinersFile, int& oneLiners, 
@@ -93,7 +121,8 @@ bool commentIsBeforeEndBrace(const string& tmpStr)
 }
 
 int main(const int argc, const char* argv[])
-{	
+{
+	// ^\s*{\s
 	// Input file
 	const string INPUT_FILE_NAME = "test.txt";
 	const string DELIMITER = " line: ";
@@ -122,8 +151,11 @@ int main(const int argc, const char* argv[])
 	// ##### MISC COUNTERS #####
 	int lambdasChecked = 0;
 	int oneLiners = 0;
+	int twoLiners = 0;
 	int fakeLambdas = 0;
 	int otherFaults = 0;
+	int faults = 0;
+	int testAmount = 0;
 
 	// ##### OUTPUT FILES #####
 	// ONE
@@ -142,7 +174,10 @@ int main(const int argc, const char* argv[])
 
 	// MISC
 	ofstream oneLinersFile("comment_one_liners.txt", ofstream::out | ofstream::trunc);
+	ofstream twoLinersFile("comment_two_liners.txt", ofstream::out | ofstream::trunc);
+	
 	ofstream fakeLambdaFile("comment_fake_lambda.txt", ofstream::out | ofstream::trunc);
+	ofstream fakeLambdaPathFile("comment_fake_lambda_path.txt", ofstream::out | ofstream::trunc);
 	ofstream faultFile("comment_faults.txt", ofstream::out | ofstream::trunc);
 	
 	while (getline(inputFile, currentInputLine))
@@ -176,8 +211,6 @@ int main(const int argc, const char* argv[])
 		bool lambdaHadACommentAbove = false;
 		bool lambdaOneLinerHadACommentAfter = false;
 
-		string tmpStorageForOneLiner;
-
 		bool foundStartingBrace = false;
 		bool foundEndingBrace = false;
 		auto bracesCounter = 0;
@@ -189,6 +222,8 @@ int main(const int argc, const char* argv[])
 				inFileLineCounter++;
 				if (inFileLineCounter == rowToCheckFrom)
 				{
+					linesFromFile.push_back(tmpStr);
+					
 					// ##### ROW ABOVE LAMBDA #####
 					if (containsAComment(tmpStr))
 					{
@@ -200,6 +235,8 @@ int main(const int argc, const char* argv[])
 					// ##### ROW WITH LAMBDA #####
 					if (getline(fileToCopyFrom, tmpStr))
 					{
+						linesFromFile.push_back(tmpStr);
+						
 						auto startingBraces = count(tmpStr.begin(), tmpStr.end(), '{');
 						auto endingBraces = count(tmpStr.begin(), tmpStr.end(), '}');
 						bracesCounter = startingBraces - endingBraces;
@@ -223,8 +260,8 @@ int main(const int argc, const char* argv[])
 
 								if (tmpStr.find(';') != string::npos)	// Fake lambda?
 								{	
-									fakeLambdaFile << tmpStr << endl;
 									fakeLambdas++;
+									fakeLambdaPathFile << currentInputLine << endl;
 									break;
 								} else
 								{
@@ -237,6 +274,11 @@ int main(const int argc, const char* argv[])
 							else if (bracesCounter >= 1)
 							{
 								foundStartingBrace = true;
+								if (containsCommentAfterStartingBrace(tmpStr))
+								{
+									lambdaHadACommentInside = true;
+									commentsInsideLambda++;
+								}
 							}
 
 							// More end braces than start braces
@@ -266,7 +308,8 @@ int main(const int argc, const char* argv[])
 							{
 								if (getline(fileToCopyFrom, tmpStr))
 								{
-									if (!foundEndingBrace && bracesCounter != 0) {
+									linesFromFile.push_back(tmpStr);
+									if (!foundEndingBrace) {
 
 										// NOTE: Just a single comment inside each multi-line lambda is checked, then it breaks
 										if (!lambdaHadACommentInside && containsAComment(tmpStr) && commentIsBeforeEndBrace(tmpStr))
@@ -282,14 +325,23 @@ int main(const int argc, const char* argv[])
 
 										if (bracesCounter == 0)
 										{
-											cout << ":"; // End brace was found.
+											cout << ":"; // End brace was found without a comment.
 											break;
 										}
 									}
 								} else
 								{
-									cout << ".";	// Could not find an even amount of braces before the end of the file.
-									// TODO: Faults?
+									// Could not find an even amount of braces before the end of the file.
+									cout << ".";
+									faultFile << "....." << endl;
+									faultFile << "Not even amount of braces before end of file" << endl;
+									faultFile << "....." << endl;
+									for (const string& s : linesFromFile)
+									{
+										faultFile << s << endl;
+									}
+									faultFile << tmpStr << endl;
+									faults++;
 									break;
 								}
 							}
@@ -300,6 +352,7 @@ int main(const int argc, const char* argv[])
 							{
 								if (getline(fileToCopyFrom, tmpStr))
 								{
+									linesFromFile.push_back(tmpStr);
 									startingBraces = count(tmpStr.begin(), tmpStr.end(), '{');
 
 									if (startingBraces < 1) // Keep looking! We don't care about bracesCounter until we find the start.
@@ -311,37 +364,160 @@ int main(const int argc, const char* argv[])
 									bracesCounter += startingBraces;
 									bracesCounter -= count(tmpStr.begin(), tmpStr.end(), '}');
 
-									if (bracesCounter < 0) // More ending braces than starting braces
+									if (bracesCounter < 0) // More ending braces than starting braces, seem to be none of these
 									{
+										faultFile << "....." << endl;
+										faultFile << "More ending braces than starting braces" << endl;
+										faultFile << "....." << endl;
+										for(const string& s : linesFromFile)
+										{
+											faultFile << s << endl;
+										}
 										faultFile << tmpStr << endl;
-										otherFaults++;
+										faults++;
 										break;
 									}
 
-									if (bracesCounter == 0) // "One-liner"
+									// ##### TWO-LINER #####
+									// Treated like one-liner, but it is a multi-line
+
+									if (bracesCounter == 0)
 									{
-										if (tmpStr.find("});") != string::npos || tmpStr.find("} );") != string::npos)
+										if (tmpStr.find(");") != string::npos || tmpStr.find("};") != string::npos)
 										{
-											testFile << tmpStr << endl;
+											twoLiners++;
 											
-											evaluateOneLiner(oneLinersFile,
-												oneLiners,
-												commentsInsideOneLiner,
-												commentsAfterOneLiner,
-												commentInsideOneLinerFile,
-												commentAfterOneLinerFile, tmpStr,
-												lambdaHadACommentInside, lambdaOneLinerHadACommentAfter);
+											// ##### COMMENT INSIDE #####
+											if (containsCommentInsideOneLiner(tmpStr))
+											{
+												commentsInsideLambda++;
+												insideLambdaFile << tmpStr << endl;
+												lambdaHadACommentInside = true;
+											}
 											break;
-										} else
+										}
+										else
 										{
-											// NOTE: There are more that are one-liners...
-											faultFile << tmpStr << endl;
+											if (firstCharacterOnLineIsStartingBrace(tmpStr))
+											{
+												bracesCounter += 1;
+												foundStartingBrace = true;
+												// Check for multiline
+												while (true)
+												{
+													if (getline(fileToCopyFrom, tmpStr))
+													{
+														linesFromFile.push_back(tmpStr);
+														if (!foundEndingBrace) {
+
+															// NOTE: Just a single comment inside each multi-line lambda is checked, then it breaks
+															if (!lambdaHadACommentInside && containsAComment(tmpStr) && commentIsBeforeEndBrace(tmpStr))
+															{
+																lambdaHadACommentInside = true;
+																insideLambdaFile << tmpStr << endl;
+																commentsInsideLambda++;
+																break;
+															}
+
+															bracesCounter += count(tmpStr.begin(), tmpStr.end(), '{');
+															bracesCounter -= count(tmpStr.begin(), tmpStr.end(), '}');
+
+															if (bracesCounter == 0)
+															{
+																cout << ":"; // End brace was found without a comment.
+																break;
+															}
+														}
+													}
+													else
+													{
+														// Could not find an even amount of braces before the end of the file.
+														cout << ".";
+														faultFile << "....." << endl;
+														faultFile << "Not even amount of braces before end of file" << endl;
+														faultFile << "....." << endl;
+														for (const string& s : linesFromFile)
+														{
+															faultFile << s << endl;
+														}
+														faultFile << tmpStr << endl;
+														faults++;
+														break;
+													}
+												}
+												otherFaults++;
+												break;
+												
+											} else
+											{
+												// NOTE: There are more that are one-liners...
+												faultFile << "-----" << endl;
+												for (const string& s : linesFromFile)
+												{
+													faultFile << s << endl;
+												}
+												faultFile << tmpStr << endl;
+												faults++;
+												break;
+											}
+											
+										}
+									} else // It had at least one starting brace! Treat as multiline!
+									{
+										while(true)
+							{
+								if (getline(fileToCopyFrom, tmpStr))
+								{
+									linesFromFile.push_back(tmpStr);
+									if (!foundEndingBrace) {
+
+										// NOTE: Just a single comment inside each multi-line lambda is checked, then it breaks
+										if (!lambdaHadACommentInside && containsAComment(tmpStr) && commentIsBeforeEndBrace(tmpStr))
+										{
+											lambdaHadACommentInside = true;
+											insideLambdaFile << tmpStr << endl;
+											commentsInsideLambda++;
+											break;
+										}
+
+										bracesCounter += count(tmpStr.begin(), tmpStr.end(), '{');
+										bracesCounter -= count(tmpStr.begin(), tmpStr.end(), '}');
+
+										if (bracesCounter == 0)
+										{
+											cout << ":"; // End brace was found without a comment.
 											break;
 										}
 									}
 								} else
 								{
-									cout << "F";	// TODO: Investigate why it arrives here. *thinking*
+									// Could not find an even amount of braces before the end of the file.
+									cout << ".";
+									faultFile << "....." << endl;
+									faultFile << "Not even amount of braces before end of file" << endl;
+									faultFile << "....." << endl;
+									for (const string& s : linesFromFile)
+									{
+										faultFile << s << endl;
+									}
+									faultFile << tmpStr << endl;
+									faults++;
+									break;
+								}
+							}
+									}
+								} else
+								{
+									// The file ends before it arrives here, did not find a starting brace first
+									cout << "F";
+									
+									testFile << currentInputLine << endl;
+									//for (const string& s : linesFromFile)
+									//{
+									//	testFile << s << endl;
+									//}
+									//testFile << tmpStr << endl;
+									testAmount++;
 									break;
 								}
 							}
@@ -375,6 +551,8 @@ int main(const int argc, const char* argv[])
 		{
 			insideLambdaFilePath << currentInputLine << endl;
 		}
+
+		linesFromFile.clear();
 	}
 
 	int totalChecked = noCommentsAtAll + hadAComment;
@@ -395,6 +573,11 @@ int main(const int argc, const char* argv[])
 	cout << "------------------------------------------------" << endl;
 	cout << "Possibly incorrectly matched lambda: " << fakeLambdas << endl;
 	cout << "One-liners: " << oneLiners << endl;
+	cout << "Two-liners: " << twoLiners << endl;
+	cout << "Faults: " << faults << endl;
+	cout << "Other faults: " << otherFaults << endl;
+	cout << "Test: " << testAmount << endl;
+	cout << "Possible multi-liner, not checked: " << otherFaults << endl;
 	cout << "Total checked: " << totalChecked << "/" << lambdasChecked << ", missing " << missingLambdas << endl;
 
 	return 0;
