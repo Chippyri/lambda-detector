@@ -33,6 +33,7 @@ int oneLiners = 0;
 ofstream insideLambdaFile("comment_inside_lambda.txt", ofstream::out | ofstream::trunc);
 ofstream aboveLambdaFile("comment_above_lambda.txt", ofstream::out | ofstream::trunc);
 ofstream commentAfterOneLinerFile("comment_after_one_liner.txt", ofstream::out | ofstream::trunc);
+ofstream testFile("comment_test.txt", ofstream::out | ofstream::trunc);
 
 bool containsAComment(const string& tmpStr)
 {
@@ -102,10 +103,12 @@ int main()
 
 	string currentInputLine;
 
+	int counter = 0;
+
 	while (getline(inputFile, currentInputLine))
 	{
 		linesRead++;
-		
+		counter++;
 		const auto delimiterPosition = currentInputLine.find(DELIMITER);
 		const auto pastDelimiterPosition = delimiterPosition + DELIMITER_LENGTH;
 		const string filePath = currentInputLine.substr(0, delimiterPosition);
@@ -152,6 +155,8 @@ int main()
 					// ##### ROW WITH LAMBDA #####
 					if (getline(fileToCopyFrom, tmpStr))
 					{
+						testFile << tmpStr << endl;
+						
 						auto startingBraces = count(tmpStr.begin(), tmpStr.end(), '{');
 						auto endingBraces = count(tmpStr.begin(), tmpStr.end(), '}');
 						bracesCounter = startingBraces - endingBraces;
@@ -178,9 +183,8 @@ int main()
 						}
 
 						// ##### MULTI-LINER #####
-						else if (bracesCounter >= 1)
+						else
 						{
-							foundStartingBrace = true;
 							if (containsCommentAfterStartingBrace(tmpStr))
 							{
 								lambdaHadACommentInside = true;
@@ -189,15 +193,12 @@ int main()
 								lambdasChecked++;
 								break;
 							}
-						}
 
-						if (foundStartingBrace)
-						{
 							while (true)
 							{
 								if (getline(fileToCopyFrom, tmpStr))
 								{
-
+									testFile << tmpStr << endl;
 									// NOTE: Just a single comment inside each multi-line lambda is checked, then it breaks
 									if (!lambdaHadACommentInside && containsAComment(tmpStr) && commentIsBeforeEndBrace(tmpStr))
 									{
@@ -205,31 +206,31 @@ int main()
 										insideLambdaFile << tmpStr << endl;
 										commentsInsideLambda++;
 										lambdasChecked++;
+										testFile << endl << endl << endl;
 										break;
 									}
 
 									bracesCounter += count(tmpStr.begin(), tmpStr.end(), '{');
 									bracesCounter -= count(tmpStr.begin(), tmpStr.end(), '}');
 
-									if (bracesCounter == 0)
+									if (bracesCounter <= 0)
 									{
-										cout << ":"; // End brace was found without a comment.
+										//cout << ":"; // End brace was found without a comment.
 										lambdasChecked++;
+										testFile << endl << endl << endl;
 										break;
 									}
 								}
 								else
 								{
-									// Could not find an even amount of braces before the end of the file.
+									// Could not find an even or more end braces before the end of the file.
 									lambdasNotChecked++;
 									break;
 								}
 							}
-						} else {
-							// Did not find starting brace on the same row
-							lambdasNotChecked++;
-							break;
 						}
+
+
 					} else
 					{
 						break;
@@ -247,9 +248,35 @@ int main()
 		{
 			hadAComment++;
 		}
+
+		if (counter == 12000)
+		{
+			int totalChecked = lambdasChecked + lambdasNotChecked + oneLiners;
+			int missingLambdas = linesRead - totalChecked;
+
+			cout << endl << "------------------------------------------------" << endl;
+			cout << "COMMENTS" << endl;
+			cout << "------------------------------------------------" << endl;
+			cout << "Comments inside (one): " << commentsInsideOneLiner << endl;
+			cout << "Comments after (one): " << commentsAfterOneLiner << endl;
+			cout << "Right above lambda (one/multi): " << commentsAboveLambda << endl;
+			cout << "Comments inside (multi): " << commentsInsideLambda << endl;
+
+			cout << "Lambdas that had some comment: " << hadAComment << endl;
+			//cout << "Lambdas with no comments at all: " << noCommentsAtAll << endl;
+			cout << "Lambdas with no comments at all (minus not checked): " << noCommentsAtAll - lambdasNotChecked << endl;
+
+			cout << endl << "------------------------------------------------" << endl;
+			cout << "MISC" << endl;
+			cout << "------------------------------------------------" << endl;
+			cout << "Lambdas checked: " << lambdasChecked << endl;
+			cout << "Lambdas not checked: " << lambdasNotChecked << endl;
+			cout << "One-liners: " << oneLiners << endl;
+			cout << "Total tested: " << totalChecked << "/" << linesRead << ", missing " << missingLambdas << endl;
+		}
 	}
 
-	int totalChecked = lambdasChecked + lambdasNotChecked;
+	int totalChecked = lambdasChecked + lambdasNotChecked + oneLiners;
 	int missingLambdas = linesRead - totalChecked;
 
 	cout << endl << "------------------------------------------------" << endl;
